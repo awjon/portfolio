@@ -1,10 +1,9 @@
 /**
  * FurnitureSpawner
  * ----------------
- * Turns logical furniture (explicit placements + any furniture baked into the
- * tile grid) into renderable `PlacedModel`s. It resolves the logical
- * `FurnitureType` to an `AssetKey` via the registry (goal 4) and applies optional
- * rotation (goal 7).
+ * Turns logical furniture placements into renderable `PlacedModel`s, resolving
+ * each `FurnitureType` to an `AssetKey` via the registry (goal 4) and applying
+ * optional rotation (goal 7).
  *
  * `autoFaceRotation` is the extension point for "intelligent" rotation: today it
  * turns an un-rotated chair toward the nearest table/desk; the same hook can grow
@@ -19,7 +18,6 @@ import {
   type HouseLayout,
   cellToWorld,
   gridSize,
-  isFurniture,
   FLOOR_Y,
 } from './HouseLayout';
 
@@ -50,22 +48,12 @@ export const FURNITURE_ASSET: Record<FurnitureType, AssetKey> = {
 
 const degToRad = (d: number) => (d * Math.PI) / 180;
 
-/** Gather explicit placements plus any furniture tiles embedded in the grid. */
 export function collectPlacements(layout: HouseLayout): FurniturePlacement[] {
-  const placements = [...layout.furniture];
-  layout.tiles.forEach((line, row) =>
-    line.forEach((t, col) => {
-      if (isFurniture(t)) placements.push({ type: t, col, row });
-    }),
-  );
-  return placements;
+  return [...layout.furniture];
 }
 
 /** Intelligent-rotation hook: face chairs toward the nearest table/desk. */
-export function autoFaceRotation(
-  p: FurniturePlacement,
-  all: FurniturePlacement[],
-): number {
+export function autoFaceRotation(p: FurniturePlacement, all: FurniturePlacement[]): number {
   if (p.type !== 'chair') return 0;
   const targets = all.filter((t) => t.type === 'table' || t.type === 'desk');
   if (!targets.length) return 0;

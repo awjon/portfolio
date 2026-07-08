@@ -16,15 +16,15 @@ export interface PlacedModel {
   assetKey: AssetKey;
   position: [number, number, number]; // world units
   rotationY: number; // radians
-  footprint: [number, number]; // tiles (w, h) — for placeholder sizing
-  source: 'wall' | 'opening' | 'furniture' | 'decoration';
+  footprint: [number, number]; // tiles (w, h) — for furniture placeholder sizing
+  source: 'wall' | 'opening' | 'corner' | 'furniture' | 'decoration';
   roomId?: string;
   /**
-   * For wall/opening models: the actual N/E/S/W connection bitmask. Lets the
-   * placeholder draw the exact wall shape without depending on the rotation
-   * convention used for real GLBs.
+   * Shell pieces (wall/opening/corner) are stretched to fit these world dims
+   * [length, height] so any kit tiles seamlessly regardless of native size.
+   * Corners fit height only (length 0 → uniform scale to height).
    */
-  wallMask?: number;
+  fit?: [number, number];
 }
 
 /** An axis-aligned (optionally yaw-rotated) box collider. */

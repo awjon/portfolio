@@ -10,12 +10,12 @@ mobile.
 - **M2** — interactions: proximity detector, "Press E" prompt, project panels
   fed from `content/projects.ts`, and an NPC dialog box.
 - **M3** — modular indoor **house engine** (`src/world/`): a seeded, data-driven
-  world generator. A logical tile map + room list is auto-tiled into walls
-  (corners / T-junctions / cross / end caps), furnished per room type, lit per
-  room, and given automatic colliders and a single floor. Swap the layout or the
-  asset registry to re-theme it (office, hospital, spaceship…). Furniture uses the
-  real Kenney Furniture Kit GLBs; the wall/door/window shell is drawn procedurally
-  so it always tiles seamlessly. Missing furniture falls back to a coloured box.
+  world generator. A room list becomes an ownership grid whose boundaries are
+  auto-tiled into **edge-based** walls (real Kenney panels on cell edges + corner
+  caps at junctions), with auto doors between rooms and windows on exterior walls,
+  furniture per room type (hugging the walls), per-room lighting, automatic
+  colliders and a single floor. Swap the layout or the asset registry to re-theme
+  it (office, hospital, spaceship…). Missing furniture falls back to a coloured box.
 - **M4** — performance pass: lazy-loaded 3D chunk (app shell paints from a
   ~49KB gzipped chunk), isolated physics-WASM chunk, render loop pauses when
   the tab is hidden or a panel is open, DPR clamped + adaptive scaling, baked
@@ -59,13 +59,14 @@ Project media (optional): drop `.mp4` or images in `public/media/` matching the
 
 ### The house engine — `src/world/`
 
-The world is a **procedurally-generated indoor house**. Furniture uses the real
+The world is a **procedurally-generated indoor house** built from the real
 **Kenney Furniture Kit** (CC0) GLBs in `public/models/furniture/` (a missing file
-falls back to a coloured box). The wall/door/window shell is drawn procedurally,
-because the Kenney wall pieces are edge-based (1u panels, 0.55u corner caps) and
-don't fill a cell grid — procedural geometry guarantees seamless tiling. The wall
-GLBs stay in the registry so you can switch back to them and calibrate if you want
-the exact Kenney wall look (see `HouseRenderer` / `public/models/furniture/README.txt`).
+falls back to a coloured box). Walls are **edge-based**, the way Kenney models
+them: the layout is an ownership grid of room cells, a wall panel is placed on
+every boundary edge (between two rooms, or a room and the outside) and a corner
+cap at each L-junction. Rooms therefore sit directly against each other and
+furniture can hug a wall. Each shell piece is fitted to the tile size at load, so
+the kit's native dimensions don't matter.
 
 Modules (each a single responsibility):
 
@@ -74,20 +75,20 @@ Modules (each a single responsibility):
 | `HouseLayout.ts`      | Logical tile/room types, grid helpers, ASCII + room-plan builders, prefabs |
 | `HouseAssets.ts`      | The **only** place GLB paths live — logical object → file(s)   |
 | `Randomizer.ts`       | Seeded deterministic RNG (same seed → same house)             |
-| `AutoTile.ts`         | Picks wall variant + rotation from neighbours                 |
+| `AutoTile.ts`         | Corner-cap placement + rotation at wall junctions             |
 | `Floor.ts`            | One floor sized to the layout                                 |
 | `FurnitureSpawner.ts` | Logical furniture → models (+ optional smart rotation)        |
 | `RoomDecorator.ts`    | Auto-fills each room type with props                          |
 | `CollisionBuilder.ts` | Automatic colliders (walls/cabinets block; rugs/lamps don't)  |
 | `HouseGenerator.ts`   | Orchestrates the pipeline → a pure-data `HouseScene`          |
-| `HouseRenderer.tsx`   | The only R3F module — procedural shell + real furniture GLBs   |
+| `HouseRenderer.tsx`   | The only R3F module — real Kenney GLBs (walls fitted to edges) |
 
 **Design a house:** edit `createDefaultHouse()` in `HouseLayout.ts` — it lists
-rooms as rectangles (optionally via a prefab like `livingRoomLarge`) and the
-builder draws shared walls, auto-carves doors between neighbours, and adds windows
-to exterior walls. Or hand-draw a grid with `parseAsciiLayout` (`#` wall, `.`
-floor, `D` door, `O` window, `@` spawn). No wall rotations are ever authored —
-`AutoTile` derives them from adjacency.
+rooms as adjacent rectangles (optionally via a prefab like `livingRoomLarge`).
+`buildRoomsLayout` fills the ownership grid; the generator then derives every wall
+from the boundaries between owners, auto-picks one door per adjacent room pair,
+and spaces windows along the exterior. No wall positions or rotations are ever
+authored — they all fall out of adjacency.
 
 **Re-theme it:** swap `HOUSE_ASSETS` for another registry (office, hospital,
 spaceship…). Nothing else changes — the whole engine is data-driven off the
