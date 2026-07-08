@@ -13,8 +13,9 @@ mobile.
   world generator. A logical tile map + room list is auto-tiled into walls
   (corners / T-junctions / cross / end caps), furnished per room type, lit per
   room, and given automatic colliders and a single floor. Swap the layout or the
-  asset registry to re-theme it (office, hospital, spaceship…). Runs with
-  placeholder boxes until you add the Kenney Furniture Kit GLBs.
+  asset registry to re-theme it (office, hospital, spaceship…). Furniture uses the
+  real Kenney Furniture Kit GLBs; the wall/door/window shell is drawn procedurally
+  so it always tiles seamlessly. Missing furniture falls back to a coloured box.
 - **M4** — performance pass: lazy-loaded 3D chunk (app shell paints from a
   ~49KB gzipped chunk), isolated physics-WASM chunk, render loop pauses when
   the tab is hidden or a panel is open, DPR clamped + adaptive scaling, baked
@@ -58,11 +59,13 @@ Project media (optional): drop `.mp4` or images in `public/media/` matching the
 
 ### The house engine — `src/world/`
 
-The world is a **procedurally-generated indoor house**. It runs with placeholder
-boxes immediately, so you can see the full layout, doors, windows, furniture and
-lighting before adding any art. Add **Kenney Furniture Kit** (CC0) GLBs under
-`public/models/furniture/` (see that folder's `README.txt`) and each placeholder
-is replaced by the real model — no code change.
+The world is a **procedurally-generated indoor house**. Furniture uses the real
+**Kenney Furniture Kit** (CC0) GLBs in `public/models/furniture/` (a missing file
+falls back to a coloured box). The wall/door/window shell is drawn procedurally,
+because the Kenney wall pieces are edge-based (1u panels, 0.55u corner caps) and
+don't fill a cell grid — procedural geometry guarantees seamless tiling. The wall
+GLBs stay in the registry so you can switch back to them and calibrate if you want
+the exact Kenney wall look (see `HouseRenderer` / `public/models/furniture/README.txt`).
 
 Modules (each a single responsibility):
 
@@ -77,7 +80,7 @@ Modules (each a single responsibility):
 | `RoomDecorator.ts`    | Auto-fills each room type with props                          |
 | `CollisionBuilder.ts` | Automatic colliders (walls/cabinets block; rugs/lamps don't)  |
 | `HouseGenerator.ts`   | Orchestrates the pipeline → a pure-data `HouseScene`          |
-| `HouseRenderer.tsx`   | The only R3F module — draws the scene, placeholder fallback    |
+| `HouseRenderer.tsx`   | The only R3F module — procedural shell + real furniture GLBs   |
 
 **Design a house:** edit `createDefaultHouse()` in `HouseLayout.ts` — it lists
 rooms as rectangles (optionally via a prefab like `livingRoomLarge`) and the

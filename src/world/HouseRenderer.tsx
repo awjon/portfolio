@@ -6,16 +6,22 @@
  * model for every placed item — resolved through the asset registry (goal 4), so
  * no path is hardcoded here.
  *
- * Every model is wrapped in a Suspense + error boundary that falls back to a
- * coloured placeholder. That means missing GLBs never break the scene: you get a
- * readable box house today and the real furniture the moment the Kenney kit is
- * dropped into /public/models/furniture/ — no code change.
+ * The shell (walls / doors / windows) is drawn as procedural geometry so it
+ * always tiles seamlessly — the Kenney wall pieces are edge-based (1u panels,
+ * 0.55u corner caps) and don't fill a cell grid, so forcing them into one leaves
+ * gaps. Their GLBs still live in the registry for anyone who wants to swap them
+ * in and calibrate.
+ *
+ * Furniture uses the real Kenney GLBs, each wrapped in a Suspense + error
+ * boundary that falls back to a coloured box — so a missing/renamed file never
+ * breaks the scene. Kenney models pivot at a corner, so GlbPart recentres each
+ * one on its cell.
  */
 
 import { Component, type ReactNode, Suspense, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
-import type * as THREE from 'three';
+import * as THREE from 'three';
 import type { HouseScene, PlacedModel, FloorSpec, PlacedLight, ColliderSpec } from './HouseTypes';
 import { HOUSE_ASSETS, type AssetDef, type AssetRegistry, type AssetPart, getAsset } from './HouseAssets';
 import { getDefaultHouseScene } from './HouseGenerator';
@@ -66,13 +72,23 @@ function GlbPart({ url, part, globalScale }: { url: string; part: AssetPart; glo
   // `true` enables Draco decompression, matching the rest of the app + the
   // `npm run compress` output.
   const { scene } = useGLTF(url, true);
-  const object = useMemo(() => scene.clone(true) as THREE.Group, [scene]);
+  // Kenney models pivot at a corner (x:0→w, z:-d→0) sitting on the floor. Recentre
+  // horizontally and rest on y=0 so the piece sits centred on its cell.
+  const object = useMemo(() => {
+    const clone = scene.clone(true) as THREE.Group;
+    const box = new THREE.Box3().setFromObject(clone);
+    const c = box.getCenter(new THREE.Vector3());
+    clone.position.set(-c.x, -box.min.y, -c.z);
+    return clone;
+  }, [scene]);
   const s = part.scale ?? 1;
   const scale: [number, number, number] = Array.isArray(s)
     ? [s[0] * globalScale, s[1] * globalScale, s[2] * globalScale]
     : [s * globalScale, s * globalScale, s * globalScale];
   return (
-    <primitive object={object} position={part.offset ?? [0, 0, 0]} rotation={[0, part.rotationY ?? 0, 0]} scale={scale} />
+    <group position={part.offset ?? [0, 0, 0]} rotation={[0, part.rotationY ?? 0, 0]} scale={scale}>
+      <primitive object={object} />
+    </group>
   );
 }
 
@@ -98,8 +114,8 @@ function WallPlaceholder({ model, color }: { model: PlacedModel; color: string }
   const box = (k: string, pos: [number, number, number], size: [number, number, number]) => (
     <mesh key={k} position={pos} castShadow receiveShadow>
       <boxGeometry args={size} />
-      {/* Soft self-illumination so the blockout reads before real art is added. */}
-      <meshStandardMaterial color={color} roughness={0.9} emissive={color} emissiveIntensity={0.22} />
+      {/* Faint self-illumination so walls never read as pure black in dim corners. */}
+      <meshStandardMaterial color={color} roughness={0.95} emissive={color} emissiveIntensity={0.1} />
     </mesh>
   );
   if (mask === 0) arms.push(box('post', [0, hy, 0], [WALL_THICKNESS * 1.5, WALL_HEIGHT, WALL_THICKNESS * 1.5]));
@@ -175,7 +191,7 @@ function FurniturePlaceholder({ model, def }: { model: PlacedModel; def: AssetDe
   );
 }
 
-function Placeholder({ model, def }: { model: PlacedModel; def: AssetDef }) {
+function Structure({ model, def }: { model: PlacedModel; def: AssetDef }) {
   if (model.assetKey === 'door') return <DoorPlaceholder model={model} />;
   if (model.assetKey === 'window') return <WindowPlaceholder model={model} />;
   if (model.source === 'wall') return <WallPlaceholder model={model} color={def.placeholder.color} />;
@@ -195,10 +211,16 @@ class ModelBoundary extends Component<{ fallback: ReactNode; children: ReactNode
 
 function AssetModel({ model, registry }: { model: PlacedModel; registry: AssetRegistry }) {
   const def = getAsset(registry, model.assetKey);
-  const fallback = <Placeholder model={model} def={def} />;
+  const structure = <Structure model={model} def={def} />;
+  // The shell (walls / doors / windows) is drawn procedurally so it always tiles
+  // seamlessly: the Kenney wall pieces are edge-based (1u panels, 0.55u corner
+  // caps) and don't fill a cell grid. Their GLBs still live in the registry for
+  // anyone who wants to swap them in and calibrate. Furniture uses the real
+  // GLBs, with the procedural box as a fallback if a file is missing.
+  if (model.source === 'wall' || model.source === 'opening') return structure;
   return (
-    <ModelBoundary fallback={fallback}>
-      <Suspense fallback={fallback}>
+    <ModelBoundary fallback={structure}>
+      <Suspense fallback={structure}>
         <group position={model.position} rotation={[0, model.rotationY, 0]}>
           <RealModel def={def} registry={registry} />
         </group>
