@@ -10,7 +10,7 @@ import * as THREE from 'three';
  * rigged GLB with multiple named clips. The EXACT clip names vary by pack and
  * version (e.g. "idle" vs "Idle", "sprint" vs "run"), so instead of hardcoding
  * them we detect the available clips and match by keyword. Drop in any Kenney
- * animated character at /public/models/character.glb and it adapts.
+ * animated character at /public/models/character/character-male-d.glb and it adapts.
  *
  * If nothing matches a tier, we gracefully fall back (walk -> run -> idle).
  */
@@ -33,7 +33,7 @@ function findClip(names: string[], keys: string[]): string | undefined {
 
 export function Character() {
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF('/models/character.glb', true);
+  const { scene, animations } = useGLTF('/models/character/character-male-d.glb', true);
   const { actions, names } = useAnimations(animations, group);
   const moveState = useGameStore((s) => s.moveState);
 
@@ -84,4 +84,4 @@ export function Character() {
   );
 }
 
-useGLTF.preload('/models/character.glb', true);
+useGLTF.preload('/models/character/character-male-d.glb', true);

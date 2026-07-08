@@ -53,8 +53,12 @@ get preview URLs.
 
 ## Notes
 
-- **SPA routing:** `public/_redirects` sends all paths to `index.html` (200), so
-  deep links and refreshes work. It's copied into `dist` automatically.
+- **SPA routing:** handled by `wrangler.jsonc`'s
+  `assets.not_found_handling: "single-page-application"`, which serves
+  `index.html` (200) for any unmatched path, so deep links and refreshes work.
+  (Do **not** add a `public/_redirects` with `/* /index.html 200` — with Workers
+  Assets that trips Cloudflare's redirect-loop detector and fails the deploy,
+  because asset serving already strips `.html`/`/index`.)
 - **Large physics chunk:** the ~1MB-gzipped `physics-vendor` chunk (Rapier WASM)
   is expected. Cloudflare's CDN caches it; returning visitors don't re-download.
 - **Models:** commit your Kenney `.glb` files under `public/` so they deploy with

@@ -63,14 +63,16 @@ export interface TileDef {
   yOffset?: number;
 }
 
-// NOTE: filenames follow Kenney's City Kit naming. If your extracted GLB names
-// differ, edit the `model` paths here — this is the single place to remap.
+// NOTE: paths point at the actual uploaded Kenney GLBs. Roads/lightposts live
+// under /models/road/ and buildings under /models/city/ (each keeps its sibling
+// Textures/ folder, so the GLBs' relative texture refs resolve). If you swap in
+// different files, edit the `model` paths here — this is the single place to remap.
 export const TILE_DEFS: Record<string, TileDef> = {
-  R: { model: '/models/city/road-straight.glb', collider: false, rotations: [0, 1, 2, 3] },
-  X: { model: '/models/city/road-crossroad.glb', collider: false },
-  B: { model: '/models/city/building-large.glb', collider: true, rotations: [0, 1, 2, 3] },
-  S: { model: '/models/city/building-small.glb', collider: true, rotations: [0, 1, 2, 3] },
-  T: { model: '/models/city/detail-lightpost.glb', collider: false, rotations: [0, 1, 2, 3] },
+  R: { model: '/models/road/road-straight.glb', collider: false, rotations: [0, 1, 2, 3] },
+  X: { model: '/models/road/road-crossroad.glb', collider: false },
+  B: { model: '/models/city/building-skyscraper-a.glb', collider: true, rotations: [0, 1, 2, 3] },
+  S: { model: '/models/city/building-a.glb', collider: true, rotations: [0, 1, 2, 3] },
+  T: { model: '/models/road/light-square.glb', collider: false, rotations: [0, 1, 2, 3] },
 };
 
 export const HALF_PI = Math.PI / 2;

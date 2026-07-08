@@ -13,8 +13,14 @@ import { Npc } from '../interactions/Npc';
 export function Interactables() {
   return (
     <>
-      {/* Guide NPC just ahead of spawn */}
-      <Npc id="npc-guide" position={[2, 0, 2]} panelId="npc-guide" name="GUIDE" />
+      {/* Guide NPC just ahead of spawn — distinct skin from the player */}
+      <Npc
+        id="npc-guide"
+        position={[2, 0, 2]}
+        panelId="npc-guide"
+        name="GUIDE"
+        model="/models/npc/character-female-a.glb"
+      />
 
       {/* North billboard */}
       <Billboard
