@@ -8,7 +8,7 @@ import {
   AdaptiveEvents,
   BakeShadows,
 } from '@react-three/drei';
-import { Suspense } from 'react';
+import { Component, type ReactNode, Suspense } from 'react';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { World } from './World';
 import { Player } from '../player/Player';
@@ -27,6 +27,17 @@ const keyboardMap = [
   { name: 'action1', keys: ['KeyE'] }, // interact (M2)
 ];
 
+/** Renders nothing if a child throws (e.g. a blocked Environment HDR fetch). */
+class SafeBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 export function Experience() {
   return (
     <KeyboardControls map={keyboardMap}>
@@ -37,18 +48,18 @@ export function Experience() {
         performance={{ min: 0.5 }}
         gl={{ powerPreference: 'high-performance', antialias: false }}
       >
-        <color attach="background" args={['#04050a']} />
-        <fog attach="fog" args={['#080a16', 18, 75]} />
+        <color attach="background" args={['#15171e']} />
+        <fog attach="fog" args={['#15171e', 45, 170]} />
 
-        {/* Base ambient — kept low so neon reads. */}
-        <ambientLight intensity={0.12} />
+        {/* Interior base fill so rooms read; per-room point lights add character. */}
+        <ambientLight intensity={0.4} />
 
-        {/* Cool moonlight key from above, casting shadows. */}
+        {/* Soft overhead key (skylight through the roof), casting shadows. */}
         <directionalLight
           castShadow
-          position={[15, 30, 10]}
-          intensity={0.5}
-          color="#8ea3ff"
+          position={[15, 40, 10]}
+          intensity={0.65}
+          color="#fff4e6"
           shadow-mapSize={[2048, 2048]}
           shadow-camera-left={-60}
           shadow-camera-right={60}
@@ -56,23 +67,48 @@ export function Experience() {
           shadow-camera-bottom={-60}
         />
 
-        {/* Magenta + cyan rim lights from opposite sides — the cyberpunk staple. */}
-        <directionalLight position={[-20, 8, -15]} intensity={0.5} color="#ff2d78" />
-        <directionalLight position={[20, 8, 15]} intensity={0.5} color="#00e5ff" />
+        {/* Gentle cool fill from the opposite side to lift shadowed walls. */}
+        <directionalLight position={[-20, 12, -15]} intensity={0.2} color="#bcd0ff" />
 
+        {/* Each subtree gets its OWN Suspense so no loader can blank the others.
+            In particular the house (World) renders even if the interactables'
+            drei <Text> font or the Environment HDR (both CDN fetches) are slow or
+            blocked — the world never depends on the network to appear. */}
         <Suspense fallback={null}>
           <Physics timeStep="vary">
-            <World />
-            <Player />
-            <Interactables />
+            <Suspense fallback={null}>
+              <World />
+            </Suspense>
+            <Suspense fallback={null}>
+              <Player />
+            </Suspense>
+            <Suspense fallback={null}>
+              <Interactables />
+            </Suspense>
           </Physics>
-          <ProximityDetector />
-          <Environment preset="night" />
-          <Preload all />
-          {/* Shadows are static (only the player moves) — bake them once so the
-              shadow map isn't recomputed every frame. */}
-          <BakeShadows />
         </Suspense>
+
+        <ProximityDetector />
+
+        {/* Environment fetches an HDR from a CDN. Wrap it so a failed/blocked
+            fetch degrades to the analytic lights instead of crashing or blocking
+            the scene. */}
+        <SafeBoundary>
+          <Suspense fallback={null}>
+            <Environment preset="apartment" />
+          </Suspense>
+        </SafeBoundary>
+
+        {/* Preload warms every asset, but can hang on blocked CDN assets — keep
+            it isolated so it can never stall the visible scene. */}
+        <SafeBoundary>
+          <Suspense fallback={null}>
+            <Preload all />
+          </Suspense>
+        </SafeBoundary>
+
+        {/* Shadows are static (only the player moves) — bake them once. */}
+        <BakeShadows />
 
         {/* Perf: pause loop when hidden/paused; scale DPR + event rate under load. */}
         <RenderLoopController />
@@ -81,12 +117,12 @@ export function Experience() {
 
         <EffectComposer>
           <Bloom
-            luminanceThreshold={0.6}
+            luminanceThreshold={0.85}
             luminanceSmoothing={0.9}
-            intensity={1.2}
+            intensity={0.5}
             mipmapBlur
           />
-          <Vignette eskil={false} offset={0.15} darkness={0.95} />
+          <Vignette eskil={false} offset={0.2} darkness={0.55} />
         </EffectComposer>
       </Canvas>
     </KeyboardControls>
