@@ -86,7 +86,7 @@ const H = WALL_HEIGHT;
  */
 export const HOUSE_ASSETS: AssetRegistry = {
   basePath: '/models/furniture/',
-  scale: 1,
+  scale: 4,
   assets: {
     floor: { parts: [{ file: 'floorFull.glb' }], collider: 'none', placeholder: { color: '#3b3f4a', height: 0.1 } },
 
@@ -126,13 +126,14 @@ export const HOUSE_ASSETS: AssetRegistry = {
     // Bedroom
     bed: { parts: [{ file: 'bedDouble.glb' }], collider: 'cuboid', footprint: [2, 2], placeholder: { color: '#7d5ba6', height: 0.8 } },
     nightstand: { parts: [{ file: 'cabinetBedDrawer.glb' }], collider: 'cuboid', placeholder: { color: '#8d6e63', height: 0.6 } },
-    dresser: { parts: [{ file: 'cabinetBedDrawerTall.glb' }], collider: 'cuboid', placeholder: { color: '#795548', height: 1.1 } },
+    dresser: { parts: [{ file: 'sideTableDrawers.glb' }], collider: 'cuboid', placeholder: { color: '#795548', height: 1.1 } },
 
     // Kitchen
     refrigerator: { parts: [{ file: 'kitchenFridge.glb' }], collider: 'cuboid', placeholder: { color: '#cfd8dc', height: 2 } },
     microwave: { parts: [{ file: 'kitchenMicrowave.glb' }], collider: 'none', placeholder: { color: '#90a4ae', height: 0.4 } },
-    fruitBowl: { parts: [{ file: 'bowlFruit.glb' }], collider: 'none', placeholder: { color: '#e57373', height: 0.2 } },
-    toaster: { parts: [{ file: 'kitchenToaster.glb' }], collider: 'none', placeholder: { color: '#b0bec5', height: 0.3 } },
+    // The kit has no bowl; a blender is the nearest small counter item.
+    fruitBowl: { parts: [{ file: 'kitchenBlender.glb' }], collider: 'none', placeholder: { color: '#e57373', height: 0.2 } },
+    toaster: { parts: [{ file: 'toaster.glb' }], collider: 'none', placeholder: { color: '#b0bec5', height: 0.3 } },
     kitchenCabinet: { parts: [{ file: 'kitchenCabinetUpper.glb' }], collider: 'cuboid', placeholder: { color: '#a1887f', height: 1 } },
 
     // Bathroom

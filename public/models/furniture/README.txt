@@ -29,13 +29,13 @@ is the ONLY place paths live):
   Bedroom
     bedDouble.glb           bed
     cabinetBedDrawer.glb    nightstand
-    cabinetBedDrawerTall.glb dresser
+    sideTableDrawers.glb    dresser
 
   Kitchen
     kitchenFridge.glb       refrigerator
     kitchenMicrowave.glb    microwave
-    bowlFruit.glb           fruit bowl
-    kitchenToaster.glb      toaster
+    kitchenBlender.glb      fruit bowl (kit has no bowl)
+    toaster.glb             toaster
     kitchenCabinetUpper.glb cabinet
 
   Bathroom
