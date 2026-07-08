@@ -17,9 +17,9 @@ interface NpcProps {
  * loop. Standing near it lets the player press E to open a DialogBox.
  *
  * Give it a different Kenney skin/model via `model` to distinguish NPCs from
- * the player (e.g. /models/npc-guide.glb).
+ * the player (e.g. /models/npc/character-female-a.glb).
  */
-export function Npc({ id, position, panelId, name, model = '/models/character.glb' }: NpcProps) {
+export function Npc({ id, position, panelId, name, model = '/models/character/character-male-d.glb' }: NpcProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(model, true);
 
