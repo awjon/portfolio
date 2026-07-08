@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import Ecctrl from 'ecctrl';
 import { Character } from './Character';
 import { useGameStore } from '../state/useGameStore';
+import { getDefaultHouseScene } from '../world/HouseGenerator';
 import type { RapierRigidBody } from '@react-three/rapier';
 
 const RUN_THRESHOLD = 3.5; // horizontal speed above which we play Run
@@ -17,6 +18,8 @@ export function Player() {
   const bodyRef = useRef<RapierRigidBody>(null);
   const setMoveState = useGameStore((s) => s.setMoveState);
   const playerPos = useGameStore((s) => s.playerPos);
+  // Spawn where the generated house places the player (living-room centre).
+  const spawn = getDefaultHouseScene().spawn;
 
   useFrame(() => {
     const body = bodyRef.current;
@@ -42,7 +45,7 @@ export function Player() {
       camInitDis={-6}
       camMaxDis={-10}
       camMinDis={-3}
-      position={[0, 2, 0]}
+      position={spawn}
     >
       <group position={[0, -0.9, 0]}>
         <Character />

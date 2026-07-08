@@ -1,16 +1,21 @@
 # Jon Wong — 3D Explorable Portfolio (M1–M5)
 
 A Samsy-style walkable 3D portfolio. You control a Kenney character through a
-cyberpunk city, walk up to glowing billboards to view projects, and talk to an
-NPC guide. Works with keyboard on desktop and an on-screen joystick on mobile.
+procedurally-generated house, walk up to glowing billboards to view projects, and
+talk to an NPC guide. Works with keyboard on desktop and an on-screen joystick on
+mobile.
 
 - **M1** — walkable scene: ecctrl physics controller, idle/walk/run animation
   blending, reflective ground, bloom.
 - **M2** — interactions: proximity detector, "Press E" prompt, project panels
   fed from `content/projects.ts`, and an NPC dialog box.
-- **M3** — tile-based Kenney city loaded from an editable map, cyberpunk
-  lighting (moonlight key + magenta/cyan rim lights), tuned fog and bloom.
-  Runs with placeholder blocks until you add the city GLBs.
+- **M3** — modular indoor **house engine** (`src/world/`): a seeded, data-driven
+  world generator. A room list becomes an ownership grid whose boundaries are
+  auto-tiled into **edge-based** walls (real Kenney panels on cell edges + corner
+  caps at junctions), with auto doors between rooms and windows on exterior walls,
+  furniture per room type (hugging the walls), per-room lighting, automatic
+  colliders and a single floor. Swap the layout or the asset registry to re-theme
+  it (office, hospital, spaceship…). Missing furniture falls back to a coloured box.
 - **M4** — performance pass: lazy-loaded 3D chunk (app shell paints from a
   ~49KB gzipped chunk), isolated physics-WASM chunk, render loop pauses when
   the tab is hidden or a panel is open, DPR clamped + adaptive scaling, baked
@@ -52,33 +57,44 @@ so any Kenney animated character works without renaming.
 Project media (optional): drop `.mp4` or images in `public/media/` matching the
 `media` paths in `content/projects.ts`. Missing media falls back to a title card.
 
-### Add the city — Kenney City Kit (CC0)
+### The house engine — `src/world/`
 
-M3 builds the city from a **tile map**, not hand-placed models. Until you add the
-GLBs it runs with placeholder blocks derived from the same map, so you can see
-the layout immediately and drop in art when ready.
+The world is a **procedurally-generated indoor house** built from the real
+**Kenney Furniture Kit** (CC0) GLBs in `public/models/furniture/` (a missing file
+falls back to a coloured box). Walls are **edge-based**, the way Kenney models
+them: the layout is an ownership grid of room cells, a wall panel is placed on
+every boundary edge (between two rooms, or a room and the outside) and a corner
+cap at each L-junction. Rooms therefore sit directly against each other and
+furniture can hug a wall. Each shell piece is fitted to the tile size at load, so
+the kit's native dimensions don't matter.
 
-1. From **kenney.nl**, download **City Kit (Roads)** and **City Kit (Commercial)**
-   — both CC0, and the buildings are designed to fit the roads.
-2. Export/convert the pieces to `.glb` (Blender: import → export glTF Binary).
-3. Put them in `public/models/city/` with these names (or edit the paths in
-   `src/world/cityLayout.ts` → `TILE_DEFS` to match your filenames):
-   - `road-straight.glb`
-   - `road-crossroad.glb`
-   - `building-large.glb`
-   - `building-small.glb`
-   - `detail-lightpost.glb`
-4. Reload. If a file is missing, the console warns and that tile falls back to a
-   block — the app never crashes on missing art.
+Modules (each a single responsibility):
 
-**Designing the city:** edit `CITY_MAP` in `src/world/cityLayout.ts`. It's a grid
-of characters — `R` road, `X` crossroad, `B`/`S` buildings, `T` prop, `P` plaza
-(kept clear for billboards/NPCs), `.` empty. The center `P` block sits on the
-origin where the player spawns. Repeated tiles are cheap; change the map freely.
+| Module                | Responsibility                                                |
+| --------------------- | ------------------------------------------------------------- |
+| `HouseLayout.ts`      | Logical tile/room types, grid helpers, ASCII + room-plan builders, prefabs |
+| `HouseAssets.ts`      | The **only** place GLB paths live — logical object → file(s)   |
+| `Randomizer.ts`       | Seeded deterministic RNG (same seed → same house)             |
+| `AutoTile.ts`         | Corner-cap placement + rotation at wall junctions             |
+| `Floor.ts`            | One floor sized to the layout                                 |
+| `FurnitureSpawner.ts` | Logical furniture → models (+ optional smart rotation)        |
+| `RoomDecorator.ts`    | Auto-fills each room type with props                          |
+| `CollisionBuilder.ts` | Automatic colliders (walls/cabinets block; rugs/lamps don't)  |
+| `HouseGenerator.ts`   | Orchestrates the pipeline → a pure-data `HouseScene`          |
+| `HouseRenderer.tsx`   | The only R3F module — real Kenney GLBs (walls fitted to edges) |
 
-Tile scale: Kenney city pieces are sized in real-world-ish units. If buildings
-look too big/small relative to `TILE_SIZE` (4 units), adjust the `scale` in
-`src/world/City.tsx` or `TILE_SIZE` in `cityLayout.ts`.
+**Design a house:** edit `createDefaultHouse()` in `HouseLayout.ts` — it lists
+rooms as adjacent rectangles (optionally via a prefab like `livingRoomLarge`).
+`buildRoomsLayout` fills the ownership grid; the generator then derives every wall
+from the boundaries between owners, auto-picks one door per adjacent room pair,
+and spaces windows along the exterior. No wall positions or rotations are ever
+authored — they all fall out of adjacency.
+
+**Re-theme it:** swap `HOUSE_ASSETS` for another registry (office, hospital,
+spaceship…). Nothing else changes — the whole engine is data-driven off the
+registry + layout. World-space sizing lives in the constants at the top of
+`HouseLayout.ts` (`TILE_SIZE`, `WALL_HEIGHT`, …); per-asset scale lives in the
+registry — tune both when you drop in real GLBs.
 
 ## Controls
 - **Desktop:** WASD move · Shift run · Space jump · **E** interact · **ESC** close
