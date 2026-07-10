@@ -100,7 +100,6 @@ export const npcDialog: Record<string, string[]> = {
   'npc-reader': ['[Placeholder] Have you read anything good lately?'],
   'npc-walker': ['[Placeholder] Nice night for a walk around the block.'],
   'npc-parkgoer': ['[Placeholder] The animals in this park are very friendly.'],
-  'npc-worker': ['[Placeholder] Road maintenance. Mind the cones.'],
 
   // Animals
   'npc-animal-cat': ['[Placeholder] Mrrp. The lab cat ignores you affectionately.'],

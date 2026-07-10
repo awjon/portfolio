@@ -39,7 +39,6 @@ const NPCS: (Omit<NpcProps, 'position'> & { tile: [number, number]; y?: number }
   { id: 'reader', model: NP + 'character-male-e.glb', tile: [21.8, 9.5], rotationY: Math.PI / 2, name: 'READER' },
   { id: 'walker', model: NP + 'character-female-b.glb', tile: [8, 18.5], rotationY: Math.PI, name: 'WALKER' },
   { id: 'parkgoer', model: NP + 'character-female-f.glb', tile: [28.5, 8.5], rotationY: -Math.PI / 2, name: 'PARKGOER' },
-  { id: 'worker', model: NP + 'character-male-f.glb', tile: [10.5, 21.2], rotationY: 0.4, name: 'WORKER', pose: 'crouch' },
 ];
 
 // ── Animals (all 15 species, in + around the station) ───────────────────────
