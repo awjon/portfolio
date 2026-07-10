@@ -1,16 +1,40 @@
-import { HouseRenderer } from './HouseRenderer';
+import { StationShell } from './StationShell';
+import { StationProps } from './StationProps';
+import { Exterior } from './Exterior';
+import { tileToWorld } from './StationMap';
 
 /**
- * The world is now a procedurally-generated indoor house, built by the modular
- * engine in `world/` (HouseLayout → HouseGenerator → HouseRenderer). Everything
- * — floor, auto-tiled walls, doors, windows, furniture, colliders and room
- * lighting — is derived from a seeded logical layout, so swapping the layout or
- * the asset registry re-themes the whole level without touching this file.
- *
- * HouseRenderer wraps each model in its own Suspense + error boundary, so the
- * scene renders as a readable placeholder house until the Kenney Furniture Kit
- * GLBs are added under /public/models/furniture/.
+ * The world: a Kenney space-station arcade sitting in a small night-time city
+ * block. StationShell draws the building (cell-centered walls/doors/windows
+ * + colliders) from the ASCII map, StationProps dresses the rooms, Exterior
+ * adds the street/skyline/park, and the point lights below give each room its
+ * own mood (arcade = neon, lab = cool white, lounge/hub = warm).
  */
+
+const light = (tile: [number, number], color: string, intensity: number, distance: number, y = 3.4) => {
+  const [x, , z] = tileToWorld(tile[0], tile[1]);
+  return { position: [x, y, z] as [number, number, number], color, intensity, distance };
+};
+
+const LIGHTS = [
+  light([3.5, 3.5], '#ff2d90', 20, 17), // arcade neon (magenta)
+  light([8.5, 6.5], '#00e5ff', 20, 17), // arcade neon (cyan)
+  light([18, 3], '#dfe8ff', 22, 18), // lab
+  light([18, 12], '#ffd9a8', 22, 18), // lounge
+  light([6, 13], '#ffd9a8', 18, 16), // hub
+  light([3, 13], '#7cf0ff', 7, 6, 1.7), // hologram-planet glow
+  light([6, 19], '#fff0d0', 12, 14, 3), // entrance / walkway
+];
+
 export function World() {
-  return <HouseRenderer />;
+  return (
+    <>
+      <StationShell />
+      <StationProps />
+      <Exterior />
+      {LIGHTS.map((l, i) => (
+        <pointLight key={i} {...l} decay={2} />
+      ))}
+    </>
+  );
 }

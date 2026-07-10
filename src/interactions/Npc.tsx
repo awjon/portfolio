@@ -1,62 +1,58 @@
-import { useRef, useEffect } from 'react';
-import { useGLTF, useAnimations, Text } from '@react-three/drei';
-import { Interactable } from './Interactable';
+import { useEffect, useMemo, useRef } from 'react';
+import { useGLTF, useAnimations } from '@react-three/drei';
 import * as THREE from 'three';
+import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { Interactable } from './Interactable';
+import { Label } from './Label';
+import { CHAR_SCALE } from '../world/StationMap';
 
-interface NpcProps {
+export interface NpcProps {
   id: string;
+  /** Kenney mini-character GLB (npc/ or arcade/ character). */
+  model: string;
   position: [number, number, number];
-  panelId: string;
+  rotationY?: number;
   name: string;
-  /** Optional distinct model; defaults to the same Kenney character GLB. */
-  model?: string;
+  /** Looping clip: 'idle' | 'sit' | 'holding-both' | 'crouch' | … */
+  pose?: string;
 }
 
 /**
- * A stationary NPC. Reuses a Kenney character GLB and plays its idle clip on a
- * loop. Standing near it lets the player press E to open a DialogBox.
- *
- * Give it a different Kenney skin/model via `model` to distinguish NPCs from
- * the player (e.g. /models/npc/character-female-a.glb).
+ * A stationary NPC. All Kenney mini characters share the same clip set, so a
+ * `pose` can pick any looping clip (sit on a sofa, carry a crate, crouch over
+ * roadworks…). Pressing E nearby opens the DialogBox for `npc-<id>` — dialog
+ * lines live in src/content/projects.ts.
  */
-export function Npc({ id, position, panelId, name, model = '/models/character/character-male-d.glb' }: NpcProps) {
+export function Npc({ id, model, position, rotationY = 0, name, pose = 'idle' }: NpcProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(model, true);
 
-  // Clone so multiple NPCs sharing one GLB don't fight over the same skeleton.
-  const cloned = useRef<THREE.Group>();
-  if (!cloned.current) {
-    cloned.current = scene.clone(true);
-  }
+  // SkeletonUtils.clone so NPCs sharing a GLB get independent skeletons.
+  const cloned = useMemo(() => skeletonClone(scene), [scene]);
+  useEffect(() => {
+    cloned.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
+    });
+  }, [cloned]);
+
   const { actions, names } = useAnimations(animations, group);
 
   useEffect(() => {
-    const idleName =
-      names.find((n) => n.toLowerCase().includes('idle')) ?? names[0];
-    const idle = idleName ? actions[idleName] : undefined;
-    idle?.reset().fadeIn(0.3).play();
+    const clipName = names.find((n) => n === pose) ?? names.find((n) => n === 'idle') ?? names[0];
+    const clip = clipName ? actions[clipName] : undefined;
+    clip?.reset().fadeIn(0.3).play();
     return () => {
-      idle?.fadeOut(0.3);
+      clip?.fadeOut(0.3);
     };
-  }, [actions, names]);
+  }, [actions, names, pose]);
 
   return (
-    <Interactable id={id} kind="npc" position={position} radius={2.8} panelId={panelId} label="Talk">
-      <group ref={group}>
-        <primitive object={cloned.current} />
+    <Interactable id={id} kind="npc" position={position} radius={2.2} panelId={`npc-${id}`} label="Talk">
+      <group ref={group} rotation={[0, rotationY, 0]} scale={CHAR_SCALE}>
+        <primitive object={cloned} />
       </group>
       {/* Floating name tag */}
-      <Text
-        position={[0, 2.4, 0]}
-        fontSize={0.3}
-        color="#39ff14"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
-      >
-        {name}
-      </Text>
+      <Label text={name} position={[0, 1.75, 0]} color="#39ff14" fontSize={0.22} />
     </Interactable>
   );
 }

@@ -1,21 +1,23 @@
 # Jon Wong — 3D Explorable Portfolio (M1–M5)
 
-A Samsy-style walkable 3D portfolio. You control a Kenney character through a
-procedurally-generated house, walk up to glowing billboards to view projects, and
-talk to an NPC guide. Works with keyboard on desktop and an on-screen joystick on
-mobile.
+A Samsy-style walkable 3D portfolio. You control a Kenney mini character through
+a night-time space-station arcade: real Kenney arcade cabinets showcase projects
+(press E to open a panel), a cast of NPCs and animals wander the rooms and the
+city block outside, and the player has jump / fall / pick-up / carry animations.
+Works with keyboard on desktop and an on-screen joystick on mobile.
 
 - **M1** — walkable scene: ecctrl physics controller, idle/walk/run animation
   blending, reflective ground, bloom.
 - **M2** — interactions: proximity detector, "Press E" prompt, project panels
   fed from `content/projects.ts`, and an NPC dialog box.
-- **M3** — modular indoor **house engine** (`src/world/`): a seeded, data-driven
-  world generator. A room list becomes an ownership grid whose boundaries are
-  auto-tiled into **edge-based** walls (real Kenney panels on cell edges + corner
-  caps at junctions), with auto doors between rooms and windows on exterior walls,
-  furniture per room type (hugging the walls), per-room lighting, automatic
-  colliders and a single floor. Swap the layout or the asset registry to re-theme
-  it (office, hospital, spaceship…). Missing furniture falls back to a coloured box.
+- **M3** — the **station world** (`src/world/`): a hand-authored ASCII map
+  (`StationMap.ts`) with **cell-centered** walls built from the Kenney Space
+  Station Kit (wall / wall-door / wall-window pieces auto-oriented from
+  neighbours), instanced rendering (one draw call per unique piece), automatic
+  colliders, an arcade hall (cabinets = project kiosks), lab, lounge
+  (furniture kit) and hub, plus a city block outside (roads, streetlights,
+  storefronts, skyline, park). NPC dialog placeholders live in
+  `content/projects.ts`; `#debug` in the URL gives a bird's-eye layout view.
 - **M4** — performance pass: lazy-loaded 3D chunk (app shell paints from a
   ~49KB gzipped chunk), isolated physics-WASM chunk, render loop pauses when
   the tab is hidden or a panel is open, DPR clamped + adaptive scaling, baked

@@ -13,8 +13,10 @@ export function DialogBox() {
 
   if (!activePanel || !activePanel.startsWith('npc-')) return null;
 
-  const lines = npcDialog[activePanel];
-  if (!lines || lines.length === 0) return null;
+  // Fall back to an obvious placeholder so a missing entry is easy to spot.
+  const lines = npcDialog[activePanel] ?? [
+    `(No dialog yet — add "${activePanel}" to npcDialog in src/content/projects.ts)`,
+  ];
 
   const isLast = line >= lines.length - 1;
 
@@ -31,7 +33,7 @@ export function DialogBox() {
     <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-4">
       <div className="w-[min(640px,94vw)] rounded-xl border border-green-400/30 bg-[#0b0d16]/95 p-5 shadow-[0_0_30px_rgba(57,255,20,0.15)]">
         <div className="mb-2 font-mono text-xs uppercase tracking-widest text-green-400/80">
-          {activePanel.replace('npc-', '').replace('-', ' ')}
+          {activePanel.replace('npc-', '').replace(/-/g, ' ')}
         </div>
         <p className="min-h-[3rem] text-sm leading-relaxed text-white/90">{lines[line]}</p>
         <div className="mt-4 flex items-center justify-between">

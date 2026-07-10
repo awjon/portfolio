@@ -37,6 +37,8 @@ export function HUD({ isTouch = false }: { isTouch?: boolean }) {
             <div>WASD — move</div>
             <div>SHIFT — run</div>
             <div>SPACE — jump</div>
+            <div>E — interact</div>
+            <div>F — carry</div>
           </>
         )}
       </div>
