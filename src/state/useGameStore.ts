@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import * as THREE from 'three';
 
-export type MoveState = 'idle' | 'walk' | 'run';
-export type InteractableKind = 'billboard' | 'npc';
+export type MoveState = 'idle' | 'walk' | 'run' | 'jump' | 'fall';
+export type InteractableKind = 'machine' | 'npc' | 'animal';
+
+/** One-shot player animation clips (Kenney mini-character clip names). */
+export type PlayerAction = 'pick-up' | 'emote-yes' | 'interact-right';
 
 export interface InteractableRecord {
   id: string;
@@ -11,13 +14,23 @@ export interface InteractableRecord {
   radius: number;
   // What opens when the player presses E near this object.
   panelId: string;
-  label?: string; // optional custom prompt, e.g. "Talk" / "View work"
+  label?: string; // optional custom prompt, e.g. "Talk" / "Play"
 }
 
 interface GameState {
   // Movement / animation
   moveState: MoveState;
   setMoveState: (s: MoveState) => void;
+
+  // One-shot animation (pick-up on interact, etc.). nonce lets the same action
+  // retrigger; Character clears it when the clip finishes.
+  playerAction: { name: PlayerAction; nonce: number } | null;
+  triggerPlayerAction: (name: PlayerAction) => void;
+  clearPlayerAction: () => void;
+
+  // Carry toggle (F): idle pose becomes 'holding-both' with a box in hand.
+  holding: boolean;
+  toggleHolding: () => void;
 
   // Live player position (written by Player each frame, read by detector).
   playerPos: THREE.Vector3;
@@ -46,6 +59,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (get().moveState !== moveState) set({ moveState });
   },
 
+  playerAction: null,
+  triggerPlayerAction: (name) =>
+    set((s) => ({ playerAction: { name, nonce: (s.playerAction?.nonce ?? 0) + 1 } })),
+  clearPlayerAction: () => set({ playerAction: null }),
+
+  holding: false,
+  toggleHolding: () => set((s) => ({ holding: !s.holding })),
+
   playerPos: new THREE.Vector3(),
 
   interactables: new Map(),
@@ -70,3 +91,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   isPaused: false,
 }));
+
+// Debug hook: lets DevTools / test scripts read live game state
+// (e.g. __game.getState().playerPos) without affecting the app.
+if (typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__game = useGameStore;
+}

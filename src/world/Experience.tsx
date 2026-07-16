@@ -6,11 +6,13 @@ import {
   Preload,
   AdaptiveDpr,
   AdaptiveEvents,
-  BakeShadows,
+  Stars,
+  PerspectiveCamera,
 } from '@react-three/drei';
 import { Component, type ReactNode, Suspense } from 'react';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { World } from './World';
+import { StationColliders } from './StationShell';
 import { Player } from '../player/Player';
 import { Interactables } from './Interactables';
 import { ProximityDetector } from '../interactions/ProximityDetector';
@@ -38,6 +40,10 @@ class SafeBoundary extends Component<{ children: ReactNode }, { failed: boolean 
   }
 }
 
+// Open the site with #debug for a fixed bird's-eye view (no player) — handy
+// for checking world layout in screenshots.
+const DEBUG_TOPDOWN = typeof window !== 'undefined' && window.location.hash.includes('debug');
+
 export function Experience() {
   return (
     <KeyboardControls map={keyboardMap}>
@@ -48,40 +54,46 @@ export function Experience() {
         performance={{ min: 0.5 }}
         gl={{ powerPreference: 'high-performance', antialias: false }}
       >
-        <color attach="background" args={['#15171e']} />
-        <fog attach="fog" args={['#15171e', 45, 170]} />
+        <color attach="background" args={['#0b0e18']} />
+        <fog attach="fog" args={['#0b0e18', 45, 150]} />
+        <Stars radius={140} depth={40} count={1600} factor={3.5} saturation={0} fade />
 
-        {/* Interior base fill so rooms read; per-room point lights add character. */}
-        <ambientLight intensity={0.4} />
+        {/* Night-time base fill; per-room point lights add character. */}
+        <ambientLight intensity={0.38} color="#8794c4" />
 
-        {/* Soft overhead key (skylight through the roof), casting shadows. */}
+        {/* Moonlight key, casting shadows over the whole block. */}
         <directionalLight
           castShadow
-          position={[15, 40, 10]}
-          intensity={0.65}
-          color="#fff4e6"
+          position={[25, 40, -15]}
+          intensity={0.55}
+          color="#bcc9ff"
           shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-60}
-          shadow-camera-right={60}
-          shadow-camera-top={60}
-          shadow-camera-bottom={-60}
+          shadow-camera-left={-70}
+          shadow-camera-right={70}
+          shadow-camera-top={70}
+          shadow-camera-bottom={-70}
         />
 
-        {/* Gentle cool fill from the opposite side to lift shadowed walls. */}
-        <directionalLight position={[-20, 12, -15]} intensity={0.2} color="#bcd0ff" />
+        {/* Gentle warm fill from the street side to lift shadowed walls. */}
+        <directionalLight position={[-20, 12, 25]} intensity={0.18} color="#ffd9a8" />
 
         {/* Each subtree gets its OWN Suspense so no loader can blank the others.
             In particular the house (World) renders even if the interactables'
             drei <Text> font or the Environment HDR (both CDN fetches) are slow or
             blocked — the world never depends on the network to appear. */}
         <Suspense fallback={null}>
-          <Physics timeStep="vary">
+          <Physics timeStep={1 / 60}>
+            {/* Colliders are pure data — mounted outside Suspense so the
+                ground exists before the player capsule starts simulating. */}
+            <StationColliders />
             <Suspense fallback={null}>
               <World />
             </Suspense>
-            <Suspense fallback={null}>
-              <Player />
-            </Suspense>
+            {!DEBUG_TOPDOWN && (
+              <Suspense fallback={null}>
+                <Player />
+              </Suspense>
+            )}
             <Suspense fallback={null}>
               <Interactables />
             </Suspense>
@@ -90,12 +102,21 @@ export function Experience() {
 
         <ProximityDetector />
 
+        {DEBUG_TOPDOWN && (
+          <PerspectiveCamera
+            makeDefault
+            position={[0, 75, 45]}
+            fov={50}
+            onUpdate={(c) => c.lookAt(0, 0, 0)}
+          />
+        )}
+
         {/* Environment fetches an HDR from a CDN. Wrap it so a failed/blocked
             fetch degrades to the analytic lights instead of crashing or blocking
             the scene. */}
         <SafeBoundary>
           <Suspense fallback={null}>
-            <Environment preset="apartment" />
+            <Environment preset="night" />
           </Suspense>
         </SafeBoundary>
 
@@ -107,10 +128,8 @@ export function Experience() {
           </Suspense>
         </SafeBoundary>
 
-        {/* Shadows are static (only the player moves) — bake them once. */}
-        <BakeShadows />
-
-        {/* Perf: pause loop when hidden/paused; scale DPR + event rate under load. */}
+        {/* Perf: pause loop when hidden/paused; scale DPR + event rate under load.
+            (No BakeShadows any more — NPCs/animals animate in place.) */}
         <RenderLoopController />
         <AdaptiveDpr pixelated />
         <AdaptiveEvents />

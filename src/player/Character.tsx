@@ -1,87 +1,90 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGLTF, useAnimations } from '@react-three/drei';
-import { useGameStore } from '../state/useGameStore';
 import * as THREE from 'three';
+import { useGameStore, type MoveState } from '../state/useGameStore';
+import { KitModel, SafeModel } from '../world/Props';
+
+const MODEL = '/models/character/character-male-d.glb';
 
 /**
- * Kenney-adapted character.
- *
- * Kenney's "Animated Characters: Protagonists" / "Survivors" packs (CC0) ship a
- * rigged GLB with multiple named clips. The EXACT clip names vary by pack and
- * version (e.g. "idle" vs "Idle", "sprint" vs "run"), so instead of hardcoding
- * them we detect the available clips and match by keyword. Drop in any Kenney
- * animated character at /public/models/character/character-male-d.glb and it adapts.
- *
- * If nothing matches a tier, we gracefully fall back (walk -> run -> idle).
+ * The playable Kenney mini character. Its GLB ships a full clip set —
+ * locomotion here maps to idle / walk / sprint / jump / fall, one-shot
+ * actions (pick-up on E) interrupt locomotion and hand back when finished,
+ * and the F "carry" toggle swaps the idle pose for holding-both with a
+ * cardboard box in hand.
  */
 
-// Keyword priority lists, matched case-insensitively against clip names.
-const CLIP_KEYWORDS: Record<'idle' | 'walk' | 'run', string[]> = {
-  idle: ['idle', 'static', 'rest'],
-  walk: ['walk', 'walking'],
-  run: ['run', 'sprint', 'jog'],
+const LOCOMOTION: Record<MoveState, string> = {
+  idle: 'idle',
+  walk: 'walk',
+  run: 'sprint',
+  jump: 'jump',
+  fall: 'fall',
 };
-
-function findClip(names: string[], keys: string[]): string | undefined {
-  const lower = names.map((n) => n.toLowerCase());
-  for (const key of keys) {
-    const i = lower.findIndex((n) => n.includes(key));
-    if (i !== -1) return names[i];
-  }
-  return undefined;
-}
 
 export function Character() {
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF('/models/character/character-male-d.glb', true);
-  const { actions, names } = useAnimations(animations, group);
+  const { scene, animations } = useGLTF(MODEL, true);
+  const { actions, mixer } = useAnimations(animations, group);
+
   const moveState = useGameStore((s) => s.moveState);
-
-  // Resolve the real clip name for each tier once, with fallbacks.
-  const resolved = useMemo(() => {
-    const idle = findClip(names, CLIP_KEYWORDS.idle) ?? names[0];
-    const walk = findClip(names, CLIP_KEYWORDS.walk);
-    const run = findClip(names, CLIP_KEYWORDS.run);
-    return {
-      idle,
-      walk: walk ?? run ?? idle, // no dedicated walk? use run, then idle
-      run: run ?? walk ?? idle,
-    };
-  }, [names]);
+  const holding = useGameStore((s) => s.holding);
+  const playerAction = useGameStore((s) => s.playerAction);
 
   useEffect(() => {
-    // Log once so you can see what the pack actually contains.
-    if (names.length) console.info('[Character] clips found:', names, '->', resolved);
-  }, [names, resolved]);
-
-  useEffect(() => {
-    const target = resolved[moveState];
-    const next = target ? actions[target] : undefined;
-    if (!next) return;
-
-    // For the "walk" tier when we're reusing the run clip, slow it down a touch
-    // so walking doesn't look like a full sprint.
-    if (moveState === 'walk' && resolved.walk === resolved.run) {
-      next.timeScale = 0.6;
-    } else {
-      next.timeScale = 1;
-    }
-
-    Object.values(actions).forEach((a) => {
-      if (a && a !== next && a.isRunning()) a.fadeOut(0.2);
+    scene.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
     });
-    next.reset().fadeIn(0.2).play();
+  }, [scene]);
 
-    return () => {
-      next.fadeOut(0.2);
+  // One-shot actions (pick-up etc.): play once, then return to locomotion.
+  useEffect(() => {
+    if (!playerAction) return;
+    const clip = actions[playerAction.name];
+    if (!clip) {
+      useGameStore.getState().clearPlayerAction();
+      return;
+    }
+    clip.setLoop(THREE.LoopOnce, 1);
+    clip.clampWhenFinished = true;
+    clip.reset().fadeIn(0.1).play();
+    const onFinished = (e: { action: THREE.AnimationAction }) => {
+      if (e.action === clip) useGameStore.getState().clearPlayerAction();
     };
-  }, [moveState, actions, resolved]);
+    mixer.addEventListener('finished', onFinished as never);
+    return () => {
+      mixer.removeEventListener('finished', onFinished as never);
+      clip.fadeOut(0.15);
+    };
+  }, [playerAction, actions, mixer]);
+
+  // Locomotion loop (suspended while a one-shot is playing).
+  useEffect(() => {
+    if (playerAction) return;
+    const name = holding && moveState === 'idle' ? 'holding-both' : LOCOMOTION[moveState];
+    const next = actions[name] ?? actions['idle'];
+    if (!next) return;
+    next.setLoop(THREE.LoopRepeat, Infinity);
+    next.reset().fadeIn(0.18).play();
+    return () => {
+      next.fadeOut(0.18);
+    };
+  }, [moveState, holding, playerAction, actions]);
 
   return (
     <group ref={group} dispose={null}>
       <primitive object={scene} />
+      {/* Carried box (F toggles). Positions are in the character's native
+          0.72-unit-tall space; the parent group applies CHAR_SCALE. */}
+      {holding && (
+        <group position={[0, 0.42, -0.25]}>
+          <SafeModel>
+            <KitModel url="/models/furniture/cardboardBoxOpen.glb" scale={0.5} />
+          </SafeModel>
+        </group>
+      )}
     </group>
   );
 }
 
-useGLTF.preload('/models/character/character-male-d.glb', true);
+useGLTF.preload(MODEL, true);

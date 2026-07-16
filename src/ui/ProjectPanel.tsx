@@ -12,8 +12,8 @@ export function ProjectPanel() {
   const closePanel = useGameStore((s) => s.closePanel);
   const [index, setIndex] = useState(0);
 
-  // Only handle billboard panels here (ids like "works-billboard-1").
-  if (!activePanel || !activePanel.startsWith('works-billboard')) return null;
+  // Only handle project panels here (ids like "works-wiseframe").
+  if (!activePanel || !activePanel.startsWith('works-')) return null;
 
   const items = projects.filter((p) => p.billboard === activePanel);
   if (items.length === 0) return null;
