@@ -16,7 +16,7 @@ import { useGLTF, useAnimations } from '@react-three/drei';
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { KIT_SCALE, tileToWorld } from './StationMap';
+import { KIT_SCALE, tileToWorld } from './HouseMap';
 
 export class SafeModel extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import Ecctrl from 'ecctrl';
 import { Character } from './Character';
 import { useGameStore } from '../state/useGameStore';
-import { SPAWN, CHAR_SCALE } from '../world/StationMap';
+import { SPAWN, CHAR_SCALE } from '../world/HouseMap';
 import type { RapierRigidBody } from '@react-three/rapier';
 
 const RUN_THRESHOLD = 3.8; // horizontal speed above which we play Sprint
@@ -59,16 +59,24 @@ export function Player() {
   return (
     <Ecctrl
       ref={bodyRef}
-      maxVelLimit={3.2}
+      maxVelLimit={3.6}
       sprintMult={1.7}
       jumpVel={4.2}
-      camInitDis={-5}
-      camMaxDis={-9}
-      camMinDis={-1.6}
-      camInitDir={{ x: 0, y: Math.PI }} // face north into the station on load
+      // Rooms are only a few units across, so the follow camera sits closer
+      // than it did in the old warehouse-sized station.
+      camInitDis={-3.4}
+      camMaxDis={-5.5}
+      camMinDis={-1.3}
+      camInitDir={{ x: 0, y: Math.PI }} // face north, up the path to the front door
+      // ecctrl applies the movement impulse ABOVE the body's centre by default,
+      // which pitches the capsule forward; walking into a wall at speed then
+      // tips the character right over. Applying it at the centre keeps them up.
+      moveImpulsePointY={0}
       position={SPAWN}
     >
-      <group position={[0, -0.9, 0]} scale={CHAR_SCALE}>
+      {/* ecctrl's capsule rests with its centre 0.65 above the floor, so the
+          model hangs from there to put the character's feet on the ground. */}
+      <group position={[0, -0.65, 0]} scale={CHAR_SCALE}>
         <Character />
       </group>
     </Ecctrl>

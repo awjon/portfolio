@@ -1,68 +1,77 @@
 /**
  * Interactables
  * -------------
- * Everything the player can press E on: the six arcade cabinets that showcase
- * projects (panel ids match `project.billboard` in content/projects.ts), a
- * cast of NPC variations, and the animals scattered in and around the
- * station. Positions are map tiles (see StationMap) or raw world coords for
- * the outdoors. Facing: rotationY 0 = south, PI = north, ±PI/2 = east/west.
+ * Everything the player can press E on:
+ *
+ *  - six arcade cabinets in the games den, one per project (panel ids match
+ *    `project.billboard` in content/projects.ts). They are deliberately packed
+ *    into one small room so the whole portfolio is a few steps apart.
+ *  - the household: every human NPC lives INDOORS, one or two per room.
+ *  - the animals: all fifteen live OUTDOORS, in the gardens and on the verge.
+ *
+ * Indoor positions are map tiles (see HouseMap), outdoor ones are raw world
+ * x/z via `at`. Facing: rotationY 0 = south, PI = north, ±PI/2 = east/west.
  */
 
 import { ArcadeMachine } from '../interactions/ArcadeMachine';
 import { Npc, type NpcProps } from '../interactions/Npc';
 import { Animal, type AnimalProps } from '../interactions/Animal';
-import { tileToWorld } from './StationMap';
+import { tileToWorld } from './HouseMap';
 
 const AR = '/models/arcade/';
 const NP = '/models/npc/';
 
-// ── Project kiosks (one arcade cabinet per project) ─────────────────────────
+// ── Project kiosks — all six line the walls of the games den ────────────────
 const MACHINES = [
-  { id: 'm-wiseframe', url: AR + 'arcade-machine.glb', tile: [2, 1.2], rot: 0, panelId: 'works-wiseframe', title: 'WISEFRAME', color: '#00e5ff' },
-  { id: 'm-rondevus', url: AR + 'pinball.glb', tile: [4, 1.2], rot: 0, panelId: 'works-rondevus', title: 'RONDEVUS', color: '#ff2d78' },
-  { id: 'm-survival', url: AR + 'dance-machine.glb', tile: [7.4, 1.4], rot: 0, panelId: 'works-survival-sim', title: 'SURVIVAL SIM', color: '#b026ff' },
-  { id: 'm-cleavercut', url: AR + 'claw-machine.glb', tile: [9, 1.2], rot: 0, panelId: 'works-cleavercut', title: 'CLEAVERCUT', color: '#ffb020', animate: true },
-  { id: 'm-playground', url: AR + 'basketball-game.glb', tile: [1.4, 4], rot: Math.PI / 2, panelId: 'works-playground-finder', title: 'PLAYGROUND FINDER', color: '#39ff14' },
-  { id: 'm-firebat', url: AR + 'air-hockey.glb', tile: [1.6, 7], rot: Math.PI / 2, panelId: 'works-firebat', title: 'FIREBAT HOMELAB', color: '#ff5533' },
+  { id: 'm-wiseframe', url: AR + 'arcade-machine.glb', tile: [6.85, 3.82], rot: 0, panelId: 'works-wiseframe', title: 'WISEFRAME', color: '#00b7d4' },
+  { id: 'm-rondevus', url: AR + 'pinball.glb', tile: [7.7, 3.95], rot: 0, panelId: 'works-rondevus', title: 'RONDEVUS', color: '#e01e63' },
+  { id: 'm-survival', url: AR + 'dance-machine.glb', tile: [10, 4.12], rot: 0, panelId: 'works-survival-sim', title: 'SURVIVAL SIM', color: '#8e24aa' },
+  { id: 'm-cleavercut', url: AR + 'claw-machine.glb', tile: [11.05, 4.0], rot: -Math.PI / 2, panelId: 'works-cleavercut', title: 'CLEAVERCUT', color: '#ef6c00', animate: true },
+  { id: 'm-playground', url: AR + 'basketball-game.glb', tile: [7.1, 5.85], rot: Math.PI, panelId: 'works-playground-finder', title: 'PLAYGROUND FINDER', color: '#2e7d32' },
+  { id: 'm-firebat', url: AR + 'air-hockey.glb', tile: [8.8, 6.05], rot: Math.PI, panelId: 'works-firebat', title: 'FIREBAT HOMELAB', color: '#d84315' },
 ] as const;
 
-// ── NPC cast (every Kenney NPC model + the two arcade characters) ───────────
+// ── The household — humans, indoors only ───────────────────────────────────
 const NPCS: (Omit<NpcProps, 'position'> & { tile: [number, number]; y?: number })[] = [
-  { id: 'guide', model: NP + 'character-male-a.glb', tile: [8, 12], rotationY: -2.2, name: 'GUIDE' },
-  { id: 'visitor', model: NP + 'character-male-b.glb', tile: [7, 15], rotationY: 0.3, name: 'VISITOR', pose: 'holding-both' },
-  { id: 'gamer', model: AR + 'character-gamer.glb', tile: [4, 2.2], rotationY: Math.PI, name: 'GAMER' },
-  { id: 'highscore', model: NP + 'character-male-c.glb', tile: [10, 5], rotationY: Math.PI / 2, name: 'REGULAR' },
-  { id: 'employee', model: AR + 'character-employee.glb', tile: [9, 7.2], rotationY: 0, name: 'EMPLOYEE' },
-  { id: 'scientist', model: NP + 'character-female-c.glb', tile: [16, 3], rotationY: Math.PI, name: 'SCIENTIST' },
-  { id: 'analyst', model: NP + 'character-female-d.glb', tile: [20.8, 3.2], rotationY: Math.PI, name: 'ANALYST' },
-  { id: 'lounger', model: NP + 'character-female-e.glb', tile: [17.35, 14], y: 0.28, rotationY: Math.PI, name: 'LOUNGER', pose: 'sit' },
-  { id: 'reader', model: NP + 'character-male-e.glb', tile: [21.8, 9.5], rotationY: Math.PI / 2, name: 'READER' },
-  { id: 'walker', model: NP + 'character-female-b.glb', tile: [8, 18.5], rotationY: Math.PI, name: 'WALKER' },
-  { id: 'parkgoer', model: NP + 'character-female-f.glb', tile: [28.5, 8.5], rotationY: -Math.PI / 2, name: 'PARKGOER' },
+  // Hall
+  { id: 'host', model: NP + 'character-male-a.glb', tile: [4.35, 6.15], rotationY: 0.5, name: 'HOST' },
+  { id: 'visitor', model: NP + 'character-female-b.glb', tile: [5.3, 5.5], rotationY: -2.3, name: 'VISITOR', pose: 'holding-both' },
+  // Kitchen / diner
+  { id: 'cook', model: NP + 'character-female-c.glb', tile: [5, 0.5], rotationY: Math.PI, name: 'COOK' },
+  { id: 'guest', model: NP + 'character-male-b.glb', tile: [2.95, 2.05], y: 0.26, rotationY: Math.PI, name: 'GUEST', pose: 'sit' },
+  // Study
+  { id: 'analyst', model: NP + 'character-female-d.glb', tile: [8, 0.6], y: 0.28, rotationY: Math.PI, name: 'ANALYST', pose: 'sit' },
+  { id: 'reader', model: NP + 'character-male-e.glb', tile: [9.65, 2.5], rotationY: Math.PI / 2, name: 'READER' },
+  // Living room
+  { id: 'lounger', model: NP + 'character-female-e.glb', tile: [1.55, 4.4], y: 0.24, rotationY: Math.PI, name: 'LOUNGER', pose: 'sit' },
+  { id: 'bookworm', model: NP + 'character-male-c.glb', tile: [2.42, 5.9], y: 0.3, rotationY: Math.PI / 2, name: 'BOOKWORM', pose: 'sit' },
+  { id: 'dj', model: NP + 'character-female-f.glb', tile: [2.3, 3.1], rotationY: 2.6, name: 'DJ' },
+  // Games den
+  { id: 'gamer', model: AR + 'character-gamer.glb', tile: [7.75, 4.75], rotationY: Math.PI, name: 'GAMER' },
+  { id: 'challenger', model: AR + 'character-employee.glb', tile: [9.5, 4.95], rotationY: 0, name: 'CHALLENGER' },
 ];
 
-// ── Animals (all 15 species, in + around the station) ───────────────────────
-// Indoor pets use map tiles; outdoor critters use raw world coords via `at`.
-const ANIMALS: (Omit<AnimalProps, 'position'> & { tile?: [number, number]; at?: [number, number] })[] = [
-  { species: 'cat', tile: [21, 2.2], rotationY: 0.8, ambient: 'idle' },
-  { species: 'dog', tile: [20, 11.5], rotationY: -0.6, ambient: 'idle' },
-  { species: 'penguin', tile: [4, 15], rotationY: 0.4, ambient: 'idle', size: 0.9 },
-  // East park
-  { species: 'deer', at: [30, -4], rotationY: 0.9, ambient: 'eat', size: 1.25 },
-  { species: 'fox', at: [34, 2.5], rotationY: -1.8, ambient: 'idle', size: 1.1 },
-  { species: 'bunny', at: [36.5, -2], rotationY: 2.3, ambient: 'eat', size: 0.85 },
-  { species: 'monkey', at: [29, 6.5], rotationY: -0.4, ambient: 'dance', size: 0.95 },
-  // West yard
-  { species: 'giraffe', at: [-34, 4], rotationY: 1.2, ambient: 'eat', size: 1.5 },
-  { species: 'tiger', at: [-30, -6], rotationY: 0.5, ambient: 'idle', size: 1.15 },
-  { species: 'bee', at: [-27.5, 7.5], rotationY: -1.1, ambient: 'idle', size: 0.6 },
-  { species: 'caterpillar', at: [-25, 10.5], rotationY: 2.6, ambient: 'eat', size: 0.7 },
-  // North yard (under the skyline)
-  { species: 'panda', at: [-6, -22], rotationY: 0.2, ambient: 'eat', size: 1.1 },
-  { species: 'parrot', at: [16, -20.5], rotationY: -2.4, ambient: 'idle', size: 0.8 },
-  // Near the entrance path / road
-  { species: 'crab', at: [-4.5, 22], rotationY: 1.5, ambient: 'idle', size: 0.8 },
-  { species: 'chick', at: [-17, 20], rotationY: -0.8, ambient: 'eat', size: 0.7 },
+// ── Animals — all fifteen live outdoors, in raw world coords ───────────────
+const ANIMALS: (Omit<AnimalProps, 'position'> & { at: [number, number] })[] = [
+  // Front garden, either side of the path
+  { species: 'dog', at: [3.5, 9], rotationY: -2.4, ambient: 'idle' },
+  { species: 'cat', at: [-4.5, 8.4], rotationY: 0.9, ambient: 'idle' },
+  { species: 'bunny', at: [-7.2, 11.5], rotationY: 2.2, ambient: 'eat', size: 0.85 },
+  { species: 'chick', at: [2, 12], rotationY: -0.7, ambient: 'eat', size: 0.7 },
+  // Back garden
+  { species: 'deer', at: [-6, -12], rotationY: 0.9, ambient: 'eat', size: 1.25 },
+  { species: 'fox', at: [4, -9.5], rotationY: -1.8, ambient: 'idle', size: 1.1 },
+  { species: 'panda', at: [-12.5, -9], rotationY: 0.3, ambient: 'eat', size: 1.1 },
+  { species: 'caterpillar', at: [1.2, -7.6], rotationY: 2.6, ambient: 'eat', size: 0.7 },
+  { species: 'parrot', at: [8.5, -14], rotationY: -2.4, ambient: 'idle', size: 0.8 },
+  { species: 'monkey', at: [-15, -16], rotationY: -0.4, ambient: 'dance', size: 0.95 },
+  // West side garden
+  { species: 'giraffe', at: [-14, 2], rotationY: 1.2, ambient: 'eat', size: 1.5 },
+  { species: 'tiger', at: [-13.5, 8], rotationY: 0.5, ambient: 'idle', size: 1.15 },
+  // East side garden
+  { species: 'bee', at: [12.5, -4], rotationY: -1.1, ambient: 'idle', size: 0.6 },
+  { species: 'penguin', at: [13, 6.5], rotationY: 0.4, ambient: 'idle', size: 0.9 },
+  { species: 'crab', at: [16, 10.5], rotationY: 1.5, ambient: 'idle', size: 0.8 },
 ];
 
 export function Interactables() {
@@ -87,12 +96,8 @@ export function Interactables() {
         return <Npc key={npc.id} {...npc} position={[x, y ?? 0, z]} />;
       })}
 
-      {ANIMALS.map(({ tile, at, ...a }) => (
-        <Animal
-          key={a.species}
-          {...a}
-          position={tile ? tileToWorld(tile[0], tile[1]) : [at![0], 0, at![1]]}
-        />
+      {ANIMALS.map(({ at, ...a }) => (
+        <Animal key={a.species} {...a} position={[at[0], 0, at[1]]} />
       ))}
     </>
   );

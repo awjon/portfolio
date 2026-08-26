@@ -1,38 +1,39 @@
-import { StationShell } from './StationShell';
-import { StationProps } from './StationProps';
+import { HouseShell } from './HouseShell';
+import { HouseProps } from './HouseProps';
 import { Exterior } from './Exterior';
-import { tileToWorld } from './StationMap';
+import { ROOM_CENTER, tileToWorld, WALL_HEIGHT, type Room } from './HouseMap';
 
 /**
- * The world: a Kenney space-station arcade sitting in a small night-time city
- * block. StationShell draws the building (cell-centered walls/doors/windows
- * + colliders) from the ASCII map, StationProps dresses the rooms, Exterior
- * adds the street/skyline/park, and the point lights below give each room its
- * own mood (arcade = neon, lab = cool white, lounge/hub = warm).
+ * The world: a small daytime house in its garden. HouseShell draws the
+ * building (edge walls, doors, windows, roof + colliders) from the ownership
+ * grid, HouseProps dresses the rooms, Exterior lays out the plot.
+ *
+ * The sun does most of the lighting (the house has no ceiling), so the lamps
+ * below are only gentle warm fills that keep each room from going flat where
+ * the walls shade it.
  */
 
-const light = (tile: [number, number], color: string, intensity: number, distance: number, y = 3.4) => {
-  const [x, , z] = tileToWorld(tile[0], tile[1]);
-  return { position: [x, y, z] as [number, number, number], color, intensity, distance };
+const lamp = (room: Room, color: string, intensity: number, distance: number) => {
+  const [c, r] = ROOM_CENTER[room];
+  const [x, , z] = tileToWorld(c, r);
+  return { position: [x, WALL_HEIGHT * 0.8, z] as [number, number, number], color, intensity, distance };
 };
 
-const LIGHTS = [
-  light([3.5, 3.5], '#ff2d90', 20, 17), // arcade neon (magenta)
-  light([8.5, 6.5], '#00e5ff', 20, 17), // arcade neon (cyan)
-  light([18, 3], '#dfe8ff', 22, 18), // lab
-  light([18, 12], '#ffd9a8', 22, 18), // lounge
-  light([6, 13], '#ffd9a8', 18, 16), // hub
-  light([3, 13], '#7cf0ff', 7, 6, 1.7), // hologram-planet glow
-  light([6, 19], '#fff0d0', 12, 14, 3), // entrance / walkway
+const LAMPS = [
+  lamp('K', '#fff1d8', 6, 9),
+  lamp('S', '#ffeccd', 6, 9),
+  lamp('H', '#ffe9c8', 5, 8),
+  lamp('L', '#ffe6c0', 7, 10),
+  lamp('G', '#cfe2ff', 8, 10),
 ];
 
 export function World() {
   return (
     <>
-      <StationShell />
-      <StationProps />
+      <HouseShell />
+      <HouseProps />
       <Exterior />
-      {LIGHTS.map((l, i) => (
+      {LAMPS.map((l, i) => (
         <pointLight key={i} {...l} decay={2} />
       ))}
     </>
