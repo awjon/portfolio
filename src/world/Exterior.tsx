@@ -126,6 +126,33 @@ const PAVING: { pos: [number, number, number]; size: [number, number] }[] = [
   { pos: [HOUSE.maxX + 1.3, 0.008, 2.25], size: [2.6, 2.2] },
 ];
 
+/**
+ * Footprints of the outdoor things a path must go round, for NavGrid. Only the
+ * big immovable stuff: the hedge ring and the houses across the road. Benches
+ * and planters are small enough to walk around (or bump into and give up on).
+ */
+export const EXTERIOR_BLOCKERS = [
+  ...buildHedge().map((h) => {
+    const [sx, , sz] = h.scale as [number, number, number];
+    return {
+      minX: h.position[0] - sx / 2,
+      maxX: h.position[0] + sx / 2,
+      minZ: h.position[2] - sz / 2,
+      maxZ: h.position[2] + sz / 2,
+    };
+  }),
+  // City-kit houses are ~0.9 units square natively; at scale 4 that is ~3.6.
+  ...BUILDINGS.filter((b) => b.at).map((b) => {
+    const half = ((b.scale ?? 4) * 0.9) / 2;
+    return {
+      minX: b.at![0] - half,
+      maxX: b.at![0] + half,
+      minZ: b.at![1] - half,
+      maxZ: b.at![1] + half,
+    };
+  }),
+];
+
 export function Exterior() {
   const road = useMemo(buildRoad, []);
   const hedge = useMemo(buildHedge, []);

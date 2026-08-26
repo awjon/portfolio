@@ -2,7 +2,9 @@ import { lazy, Suspense } from 'react';
 import { HUD, LoadingScreen } from './ui/HUD';
 import { ProjectPanel } from './ui/ProjectPanel';
 import { DialogBox } from './ui/DialogBox';
+import { TouchHints } from './ui/TouchHints';
 import { InteractionControls } from './interactions/InteractionControls';
+import { AutoInteract } from './interactions/AutoInteract';
 import { useIsTouch } from './ui/useIsTouch';
 
 /**
@@ -12,11 +14,6 @@ import { useIsTouch } from './ui/useIsTouch';
  */
 const Experience = lazy(() =>
   import('./world/Experience').then((m) => ({ default: m.Experience }))
-);
-
-// Mobile joystick is also lazy — desktop visitors never download this code.
-const MobileControls = lazy(() =>
-  import('./ui/MobileControls').then((m) => ({ default: m.MobileControls }))
 );
 
 export default function App() {
@@ -36,13 +33,12 @@ export default function App() {
       <ProjectPanel />
       <DialogBox />
 
-      {/* Keyboard (E/ESC) always on; joystick only on touch devices. */}
+      {/* Keyboard (E/ESC) always on. Touch has no buttons at all: you walk by
+          double-tapping (see world/TapToMove) and interactions fire themselves
+          once you stop next to something. */}
       <InteractionControls />
-      {isTouch && (
-        <Suspense fallback={null}>
-          <MobileControls />
-        </Suspense>
-      )}
+      <AutoInteract enabled={isTouch} />
+      {isTouch && <TouchHints />}
     </div>
   );
 }

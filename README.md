@@ -4,8 +4,8 @@ A Samsy-style walkable 3D portfolio. You control a Kenney mini character through
 a small daytime house and its garden: real Kenney arcade cabinets in the games
 den showcase projects (press E to open a panel), the household NPCs live indoors
 and fifteen animals live outdoors, and the player has jump / fall / pick-up /
-carry animations. Works with keyboard on desktop and an on-screen joystick on
-mobile.
+carry animations. Keyboard on desktop; on mobile you double-tap where you want
+to go and interactions happen on their own — no joystick, no buttons.
 
 - **M1** — walkable scene: ecctrl physics controller, idle/walk/run animation
   blending, reflective ground, bloom.
@@ -24,9 +24,10 @@ mobile.
   ~49KB gzipped chunk), isolated physics-WASM chunk, render loop pauses when
   the tab is hidden or a panel is open, DPR clamped + adaptive scaling, baked
   static shadows, Draco decompression, and an asset-compress script.
-- **M5** — mobile joystick (touch-gated, its own lazy chunk desktop never
-  loads) with an interact button wired to the same panel logic as the E key,
-  plus Cloudflare Pages deploy config. See **DEPLOY.md**.
+- **M5** — mobile controls with **no buttons and no joystick**: double-tap the
+  ground to walk (A* over `NavGrid.ts` routes through doorways), one finger to
+  look, pinch to zoom, and interactions that fire themselves when you stop
+  beside someone. Plus Cloudflare Pages deploy config — see **DEPLOY.md**.
 
 Verified: `npm run build` compiles and bundles cleanly, no circular chunks.
 
@@ -98,8 +99,31 @@ mini kits, which are authored smaller.
 
 ## Controls
 - **Desktop:** WASD move · Shift run · Space jump · **E** interact · **ESC** close
-- **Mobile:** left thumbstick to move (push further = run) · **●** button to
-  interact / close panels. Controls appear only on touch devices.
+- **Mobile:** **double-tap** the ground to walk there · one finger to look ·
+  pinch to zoom. There is no joystick and no interact button: stop next to a
+  cabinet, NPC or animal and it opens itself. Panels close with their own
+  on-screen button.
+
+### How mobile movement works
+
+| Module                        | Responsibility                                        |
+| ----------------------------- | ----------------------------------------------------- |
+| `world/TapToMove.tsx`         | Touch-pointer double-tap → ground raycast → destination |
+| `world/NavGrid.ts`            | Walkability grid + A*, so routes go through doorways   |
+| `player/Player.tsx`           | Follows the route by feeding ecctrl the same joystick input its thumbstick used to |
+| `interactions/AutoInteract.tsx` | Opens a panel once the player stops inside an interactable's radius |
+
+Three details are worth knowing before changing any of it:
+
+- **Only `pointerType === 'touch'` is handled**, so the desktop mouse keeps
+  drag-to-orbit and a double-click does nothing.
+- **Taps are timed by `event.timeStamp`, not `performance.now()`.** This scene
+  can block the main thread for a few hundred ms on a phone; timing the gap
+  inside the handler measures that lag instead of the user's fingers and
+  rejects perfectly good double-taps.
+- **Furniture is deliberately absent from the nav grid** (its colliders come
+  from GLB bounds at load time, long after the grid is built). The follower
+  gives up if it stops making progress, which covers walking into a sofa.
 
 ## Deploying
 See **DEPLOY.md** for the full Cloudflare Pages (Git-connected) walkthrough.

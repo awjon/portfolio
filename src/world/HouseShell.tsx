@@ -178,6 +178,20 @@ function buildShell(): ShellData {
 const SHELL = buildShell();
 
 /**
+ * Footprints of everything in the shell that stands on the floor, for NavGrid.
+ * Door headers are excluded — they hang above head height, so the player walks
+ * straight under them and a path must be allowed through.
+ */
+export const WALL_BLOCKERS = SHELL.colliders
+  .filter((c) => c.position[1] - c.half[1] < 0.8)
+  .map((c) => ({
+    minX: c.position[0] - c.half[0],
+    maxX: c.position[0] + c.half[0],
+    minZ: c.position[2] - c.half[2],
+    maxZ: c.position[2] + c.half[2],
+  }));
+
+/**
  * Physics-only half of the house. Rendered OUTSIDE every Suspense boundary so
  * the ground exists the instant physics starts — otherwise the player capsule
  * free-falls through the world while the GLBs are still streaming in.

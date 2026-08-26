@@ -9,7 +9,9 @@ import {
   Sky,
   PerspectiveCamera,
 } from '@react-three/drei';
-import { Component, type ReactNode, Suspense } from 'react';
+import { Component, type ReactNode, Suspense, useEffect } from 'react';
+import { useThree } from '@react-three/fiber';
+import type * as THREE from 'three';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { World } from './World';
 import { HouseColliders } from './HouseShell';
@@ -17,6 +19,7 @@ import { Player } from '../player/Player';
 import { Interactables } from './Interactables';
 import { ProximityDetector } from '../interactions/ProximityDetector';
 import { RenderLoopController } from './RenderLoopController';
+import { TapToMove } from './TapToMove';
 
 // ecctrl reads these key names via drei's KeyboardControls.
 const keyboardMap = [
@@ -28,6 +31,28 @@ const keyboardMap = [
   { name: 'run', keys: ['Shift'] },
   { name: 'action1', keys: ['KeyE'] }, // interact (M2)
 ];
+
+/**
+ * A phone held upright has a very narrow horizontal view at a fixed vertical
+ * FOV — enough that the character alone fills most of the frame, which makes
+ * tap-to-move hard to aim. Widen the lens on portrait aspects (not all the way
+ * to a constant horizontal FOV, which lands somewhere around 110° and looks
+ * like a fisheye).
+ */
+function AdaptiveFov() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+  useEffect(() => {
+    if (!camera.isPerspectiveCamera) return;
+    const aspect = size.width / Math.max(1, size.height);
+    const fov = aspect < 0.85 ? 68 : 55;
+    if (camera.fov !== fov) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size]);
+  return null;
+}
 
 /** Renders nothing if a child throws (e.g. a blocked Environment HDR fetch). */
 class SafeBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -122,6 +147,8 @@ export function Experience() {
         </Suspense>
 
         <ProximityDetector />
+        <TapToMove />
+        {!DEBUG_TOPDOWN && <AdaptiveFov />}
 
         {DEBUG_TOPDOWN && (
           <PerspectiveCamera
