@@ -17,6 +17,14 @@ export interface AnimalProps {
   /** Ambient looping clip: 'idle' | 'eat' | 'dance'. */
   ambient?: string;
   name?: string;
+  /**
+   * Instance id. Defaults to `animal-<species>`; build mode passes its own so
+   * two copies of the same species can be moved independently (they still
+   * share the species' dialogue, which is keyed off `panelId`).
+   */
+  id?: string;
+  /** False in build mode — draw, but don't join the proximity registry. */
+  enabled?: boolean;
 }
 
 /**
@@ -31,8 +39,12 @@ export function Animal({
   size = 1,
   ambient = 'idle',
   name,
+  id: instanceId,
+  enabled = true,
 }: AnimalProps) {
-  const id = `animal-${species}`;
+  // Dialogue is keyed off the species, so `panelId` never varies with instance.
+  const panelId = `npc-animal-${species}`;
+  const id = instanceId ?? `animal-${species}`;
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(`/models/animals/animal-${species}.glb`, true);
   const cloned = useMemo(() => skeletonClone(scene), [scene]);
@@ -44,7 +56,7 @@ export function Animal({
 
   const { actions, names } = useAnimations(animations, group);
   const activePanel = useGameStore((s) => s.activePanel);
-  const talking = activePanel === `npc-${id}`;
+  const talking = activePanel === panelId;
 
   useEffect(() => {
     const want = talking ? 'dance' : ambient;
@@ -59,7 +71,15 @@ export function Animal({
   const scale = ANIMAL_SCALE * size;
 
   return (
-    <Interactable id={id} kind="animal" position={position} radius={1.4} panelId={`npc-${id}`} label="Say hi">
+    <Interactable
+      id={id}
+      kind="animal"
+      position={position}
+      radius={1.4}
+      panelId={panelId}
+      label="Say hi"
+      enabled={enabled}
+    >
       <group ref={group} rotation={[0, rotationY, 0]} scale={scale}>
         <primitive object={cloned} />
       </group>

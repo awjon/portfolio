@@ -9,6 +9,12 @@ interface InteractableProps {
   radius?: number;
   panelId: string; // which panel opens on E
   label?: string;
+  /**
+   * False while build mode is running: the object still draws in place, but it
+   * doesn't join the proximity registry. There is no player capsule to be near
+   * it, and a stale entry would leave a dead "Press E" prompt on screen.
+   */
+  enabled?: boolean;
   children: ReactNode;
 }
 
@@ -24,23 +30,29 @@ export function Interactable({
   radius = 3,
   panelId,
   label,
+  enabled = true,
   children,
 }: InteractableProps) {
   const register = useGameStore((s) => s.registerInteractable);
   const unregister = useGameStore((s) => s.unregisterInteractable);
   const groupRef = useRef<THREE.Group>(null);
+  // Destructured so the effect keys off the three numbers, not the array's
+  // identity — a fresh `[x, y, z]` literal every render would otherwise
+  // re-register the object on every frame of a build-mode drag.
+  const [x, y, z] = position;
 
   useEffect(() => {
+    if (!enabled) return;
     register({
       id,
       kind,
-      position: new THREE.Vector3(...position),
+      position: new THREE.Vector3(x, y, z),
       radius,
       panelId,
       label,
     });
     return () => unregister(id);
-  }, [id, kind, position, radius, panelId, label, register, unregister]);
+  }, [id, kind, x, y, z, radius, panelId, label, enabled, register, unregister]);
 
   return (
     <group ref={groupRef} position={position}>

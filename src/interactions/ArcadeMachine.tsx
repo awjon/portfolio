@@ -16,6 +16,10 @@ interface ArcadeMachineProps {
   title: string; // floating label (project name)
   color?: string;
   animate?: boolean; // loop the cabinet's authored clip (claw machine, etc.)
+  /** Kit scale override (build mode lets a cabinet be resized). */
+  scale?: number;
+  /** False in build mode — draw, but don't join the proximity registry. */
+  enabled?: boolean;
 }
 
 /**
@@ -32,6 +36,8 @@ export function ArcadeMachine({
   title,
   color = '#00e5ff',
   animate = false,
+  scale = PROP_SCALE,
+  enabled = true,
 }: ArcadeMachineProps) {
   const ringMat = useRef<THREE.MeshStandardMaterial>(null);
   const nearby = useGameStore((s) => s.nearbyInteractable);
@@ -45,10 +51,18 @@ export function ArcadeMachine({
   });
 
   return (
-    <Interactable id={id} kind="machine" position={position} radius={1.7} panelId={panelId} label="Play">
+    <Interactable
+      id={id}
+      kind="machine"
+      position={position}
+      radius={1.7}
+      panelId={panelId}
+      label="Play"
+      enabled={enabled}
+    >
       <group rotation={[0, rotationY, 0]}>
         <SafeModel>
-          <KitModel url={url} scale={PROP_SCALE} animate={animate} />
+          <KitModel url={url} scale={scale} animate={animate} />
         </SafeModel>
       </group>
 

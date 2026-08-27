@@ -55,7 +55,7 @@ so any Kenney animated character works without renaming.
    if the pack ships .fbx).
 3. Save it as `public/models/character.glb`.
 4. (Optional) A distinct NPC skin: save a second one as `public/models/npc-guide.glb`
-   and pass `model="/models/npc-guide.glb"` to the `<Npc>` in `world/Interactables.tsx`.
+   and point one of the `NPCS` entries in `build/defaultLayout.ts` at it.
 5. Run and check the browser console — `Character.tsx` logs which clips it found
    and how it mapped them. No dedicated walk clip? It reuses run at 0.6x speed.
 
@@ -78,15 +78,15 @@ off the same edge sweep. Because rooms are cell *sets* rather than rectangles,
 the plan can be L-shaped and stepped — which is what stops the place looking
 like a grid of boxes.
 
-| Module             | Responsibility                                                       |
-| ------------------ | -------------------------------------------------------------------- |
-| `HouseMap.ts`      | The plan, the door list, world-space constants, tile↔world helpers    |
-| `HouseShell.tsx`   | Edge sweep → floors, walls, doorways, windows, roof, colliders       |
-| `HouseProps.tsx`   | Per-room furniture, placed in (fractional) tile coordinates          |
-| `Interactables.tsx`| Project cabinets, indoor NPCs, outdoor animals                       |
-| `Exterior.tsx`     | Lawn, paths, hedge, trees, street and neighbouring houses            |
-| `InstancedKit.tsx` | One draw call per unique mesh, for kit GLBs and plain shapes alike    |
-| `Props.tsx`        | One-off GLB placement + auto colliders from each model's bounds      |
+| Module                    | Responsibility                                                       |
+| ------------------------- | -------------------------------------------------------------------- |
+| `HouseMap.ts`             | The plan, the door list, world-space constants, tile↔world helpers    |
+| `HouseShell.tsx`          | Edge sweep → floors, walls, doorways, windows, roof, colliders       |
+| `Exterior.tsx`            | Lawn, paths, hedge, trees, street and neighbouring houses            |
+| `InstancedKit.tsx`        | One draw call per unique mesh, for kit GLBs and plain shapes alike    |
+| `Props.tsx`               | One-off GLB placement + auto colliders from each model's bounds      |
+| `build/defaultLayout.ts`  | The shipped furniture / kiosk / NPC / animal layout (was `HouseProps.tsx` + `Interactables.tsx`) |
+| `build/SceneObjects.tsx`  | Draws that layout from the store, in both play and build mode        |
 
 **Redesign the house:** edit `PLAN` and `DOORS` in `HouseMap.ts`. Give a cell a
 different letter and the walls around it move; add an edge to `DOORS` and it
@@ -96,6 +96,50 @@ becomes an opening. Everything else follows.
 the Furniture Kit's scale (the kit is authored at 1 unit per tile), so changing
 it rescales the whole building consistently. `PROP_SCALE` covers the arcade /
 mini kits, which are authored smaller.
+
+## Build mode
+
+Press **Build mode** (top right) and the character and their follow camera are
+swapped for a Sims-style overhead camera with the roof off. Every movable thing
+in the world — furniture, project kiosks, people, animals — is draggable, and
+the catalog on the left offers all 364 CC0 models in the repo.
+
+- **Move** — drag an object. Drag empty ground to orbit, wheel/pinch to zoom.
+- **Rotate** — `Q` / `E` (15°), `R` (90°), or the wheel *while dragging*.
+- **Add** — pick something from the catalog, then click the floor. It stays
+  armed, so a row of chairs is one click each.
+- **Copy / delete** — `Ctrl+D` / `Del`, or the inspector buttons.
+- **Also** — `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `G` toggles quarter-tile snap,
+  `Esc` steps back out (deselect → stop placing → leave build mode).
+
+**Interactions travel with the object.** A kiosk's `panelId` and an NPC's
+dialogue key live on the object record, not on its position, so you can drag a
+project cabinet into the garden and pressing **E** there still opens that
+project. Copying an object mints a new instance id but keeps the same panel, so
+both copies open the same content.
+
+### Saving, and promoting a layout to the default
+
+Edits save to **localStorage, per visitor**. Anyone can rearrange the house and
+find it that way when they come back; nobody else sees it, and **Reset**
+restores the shipped layout. There is no server involved.
+
+To make a layout you built in the browser the one everyone gets:
+
+1. Arrange the house in build mode.
+2. Press **Export** — it downloads `layout.json`.
+3. Save that over `src/build/layout.json` and commit.
+
+`defaultLayout.ts` uses that file whenever its `objects` array is non-empty, and
+otherwise falls back to the tile-coordinate seed in the same module. The seed
+stays the readable source of truth — "move the sofa one tile north" is a
+one-number diff there and a 100-object blob in the JSON — so use whichever fits
+the change. **Import** loads a `layout.json` back into the browser, which is how
+you check one in before committing it.
+
+Adding new GLBs to `public/models/`? Run `node scripts/generate-catalog.mjs` to
+refresh `src/build/catalog.generated.ts` (committed, so the build never depends
+on the script having been run).
 
 ## Controls
 - **Desktop:** WASD move · Shift run · Space jump · **E** interact · **ESC** close
@@ -149,7 +193,7 @@ domain.
   (multiple = a carousel). `DialogBox` steps through an NPC's lines.
 
 Add a project: append to `content/projects.ts` with a `billboard` id that
-matches one of the billboards in `world/Interactables.tsx`. That's the only edit.
+matches a kiosk's `panelId` in `build/defaultLayout.ts`. That's the only edit.
 
 ## Scripts
 - `npm run dev` — dev server

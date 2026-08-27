@@ -3,9 +3,11 @@ import { HUD, LoadingScreen } from './ui/HUD';
 import { ProjectPanel } from './ui/ProjectPanel';
 import { DialogBox } from './ui/DialogBox';
 import { TouchHints } from './ui/TouchHints';
+import { BuildUI } from './ui/BuildUI';
 import { InteractionControls } from './interactions/InteractionControls';
 import { AutoInteract } from './interactions/AutoInteract';
 import { useIsTouch } from './ui/useIsTouch';
+import { useBuildStore } from './state/useBuildStore';
 
 /**
  * The 3D Experience (three.js + rapier + postprocessing) is the heavy part of
@@ -18,6 +20,10 @@ const Experience = lazy(() =>
 
 export default function App() {
   const isTouch = useIsTouch();
+  // Build mode has no character to walk, so every play-mode control comes
+  // down with it — including the key handlers, whose E and F would otherwise
+  // fight build mode's own rotate shortcut.
+  const building = useBuildStore((s) => s.mode === 'build');
 
   return (
     <div className="fixed inset-0 h-full w-full">
@@ -27,18 +33,25 @@ export default function App() {
         <Experience />
       </Suspense>
 
-      <HUD isTouch={isTouch} />
+      {!building && <HUD isTouch={isTouch} />}
 
       {/* 2D overlays (outside the canvas) */}
       <ProjectPanel />
       <DialogBox />
 
+      {/* Enter/exit build mode, plus its palette and inspector. */}
+      <BuildUI />
+
       {/* Keyboard (E/ESC) always on. Touch has no buttons at all: you walk by
           double-tapping (see world/TapToMove) and interactions fire themselves
           once you stop next to something. */}
-      <InteractionControls />
-      <AutoInteract enabled={isTouch} />
-      {isTouch && <TouchHints />}
+      {!building && (
+        <>
+          <InteractionControls />
+          <AutoInteract enabled={isTouch} />
+          {isTouch && <TouchHints />}
+        </>
+      )}
     </div>
   );
 }

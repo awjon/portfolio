@@ -15,6 +15,12 @@ export interface NpcProps {
   name: string;
   /** Looping clip: 'idle' | 'sit' | 'holding-both' | 'crouch' | … */
   pose?: string;
+  /** Character scale override (build mode lets a person be resized). */
+  scale?: number;
+  /** False in build mode — draw, but don't join the proximity registry. */
+  enabled?: boolean;
+  /** Panel to open on E. Defaults to `npc-<id>` so dialogue keys stay stable. */
+  panelId?: string;
 }
 
 /**
@@ -23,7 +29,17 @@ export interface NpcProps {
  * roadworks…). Pressing E nearby opens the DialogBox for `npc-<id>` — dialog
  * lines live in src/content/projects.ts.
  */
-export function Npc({ id, model, position, rotationY = 0, name, pose = 'idle' }: NpcProps) {
+export function Npc({
+  id,
+  model,
+  position,
+  rotationY = 0,
+  name,
+  pose = 'idle',
+  scale = CHAR_SCALE,
+  enabled = true,
+  panelId,
+}: NpcProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(model, true);
 
@@ -47,8 +63,16 @@ export function Npc({ id, model, position, rotationY = 0, name, pose = 'idle' }:
   }, [actions, names, pose]);
 
   return (
-    <Interactable id={id} kind="npc" position={position} radius={1.5} panelId={`npc-${id}`} label="Talk">
-      <group ref={group} rotation={[0, rotationY, 0]} scale={CHAR_SCALE}>
+    <Interactable
+      id={id}
+      kind="npc"
+      position={position}
+      radius={1.5}
+      panelId={panelId ?? `npc-${id}`}
+      label="Talk"
+      enabled={enabled}
+    >
+      <group ref={group} rotation={[0, rotationY, 0]} scale={scale}>
         <primitive object={cloned} />
       </group>
       {/* Floating name tag */}

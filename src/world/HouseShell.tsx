@@ -220,7 +220,12 @@ export function HouseColliders() {
   );
 }
 
-export function HouseShell() {
+/**
+ * `showRoof` false drops the eaves band, chimney and porch canopy — everything
+ * that oversails the walls and would occlude the rooms from directly above.
+ * Build mode uses it; nothing else does.
+ */
+export function HouseShell({ showRoof = true }: { showRoof?: boolean }) {
   return (
     <>
       {(Object.keys(SHELL.floors) as Room[]).map((room) => (
@@ -246,30 +251,32 @@ export function HouseShell() {
 
       {/* Roof: an eaves band round the outside plus a chimney on the west
           gable. No ceiling — the rooms have to stay visible from above. */}
-      <InstancedShapes transforms={SHELL.eaves} receiveShadow={false}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
-      </InstancedShapes>
-      <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 0.75 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
-        <boxGeometry args={[0.75 * ARCH_SCALE, 1.5 * ARCH_SCALE, 0.85 * ARCH_SCALE]} />
-        <meshStandardMaterial color="#9c6a55" roughness={0.9} />
-      </mesh>
-      <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 1.55 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
-        <boxGeometry args={[0.95 * ARCH_SCALE, 0.18 * ARCH_SCALE, 1.05 * ARCH_SCALE]} />
-        <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
-      </mesh>
-
-      {/* Porch: a canopy over the front step on two posts. */}
-      <mesh position={[FRONT_DOOR.x, WALL_HEIGHT + EAVE_H / 2, FRONT_DOOR.z + 0.75 * ARCH_SCALE]} castShadow>
-        <boxGeometry args={[3 * ARCH_SCALE, EAVE_H, 1.7 * ARCH_SCALE]} />
-        <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
-      </mesh>
-      {[-1.25 * ARCH_SCALE, 1.25 * ARCH_SCALE].map((dx) => (
-        <mesh key={dx} position={[FRONT_DOOR.x + dx, WALL_HEIGHT / 2, FRONT_DOOR.z + 1.35 * ARCH_SCALE]} castShadow>
-          <boxGeometry args={[0.15 * ARCH_SCALE, WALL_HEIGHT, 0.15 * ARCH_SCALE]} />
-          <meshStandardMaterial color="#e8e2d6" roughness={0.9} />
+      <group visible={showRoof}>
+        <InstancedShapes transforms={SHELL.eaves} receiveShadow={false}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
+        </InstancedShapes>
+        <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 0.75 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
+          <boxGeometry args={[0.75 * ARCH_SCALE, 1.5 * ARCH_SCALE, 0.85 * ARCH_SCALE]} />
+          <meshStandardMaterial color="#9c6a55" roughness={0.9} />
         </mesh>
-      ))}
+        <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 1.55 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
+          <boxGeometry args={[0.95 * ARCH_SCALE, 0.18 * ARCH_SCALE, 1.05 * ARCH_SCALE]} />
+          <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
+        </mesh>
+
+        {/* Porch: a canopy over the front step on two posts. */}
+        <mesh position={[FRONT_DOOR.x, WALL_HEIGHT + EAVE_H / 2, FRONT_DOOR.z + 0.75 * ARCH_SCALE]} castShadow>
+          <boxGeometry args={[3 * ARCH_SCALE, EAVE_H, 1.7 * ARCH_SCALE]} />
+          <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
+        </mesh>
+        {[-1.25 * ARCH_SCALE, 1.25 * ARCH_SCALE].map((dx) => (
+          <mesh key={dx} position={[FRONT_DOOR.x + dx, WALL_HEIGHT / 2, FRONT_DOOR.z + 1.35 * ARCH_SCALE]} castShadow>
+            <boxGeometry args={[0.15 * ARCH_SCALE, WALL_HEIGHT, 0.15 * ARCH_SCALE]} />
+            <meshStandardMaterial color="#e8e2d6" roughness={0.9} />
+          </mesh>
+        ))}
+      </group>
 
       {/* The front door itself, standing open against the porch wall. */}
       <SafeModel>

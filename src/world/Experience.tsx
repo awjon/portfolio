@@ -16,11 +16,13 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { World } from './World';
 import { HouseColliders } from './HouseShell';
 import { Player } from '../player/Player';
-import { Interactables } from './Interactables';
+import { SceneObjects } from '../build/SceneObjects';
+import { BuildControls } from '../build/BuildControls';
 import { ProximityDetector } from '../interactions/ProximityDetector';
 import { RenderLoopController } from './RenderLoopController';
 import { TapToMove } from './TapToMove';
 import { useGameStore } from '../state/useGameStore';
+import { useBuildStore } from '../state/useBuildStore';
 
 // ecctrl reads these key names via drei's KeyboardControls.
 const keyboardMap = [
@@ -102,8 +104,14 @@ export function Experience() {
   // A dialogue/project panel blocks WASD/Space, but the world keeps animating
   // (see RenderLoopController) — only movement input is gated.
   const isPaused = useGameStore((s) => s.isPaused);
+  // Build mode replaces the character and their follow camera with an orbit
+  // camera, so the same keys must be dead there too — build mode binds its own
+  // (see ui/BuildUI), and W/A/S/D would otherwise still be driving an
+  // unmounted player's controller.
+  const building = useBuildStore((s) => s.mode === 'build');
+  const playing = !building && !DEBUG_TOPDOWN;
   return (
-    <KeyboardControls map={isPaused ? FROZEN_KEYBOARD_MAP : keyboardMap}>
+    <KeyboardControls map={isPaused || building ? FROZEN_KEYBOARD_MAP : keyboardMap}>
       <Canvas
         shadows
         camera={{ fov: 55, position: [0, 5, 10] }}
@@ -147,20 +155,31 @@ export function Experience() {
             <Suspense fallback={null}>
               <World />
             </Suspense>
-            {!DEBUG_TOPDOWN && (
+            {playing && (
               <Suspense fallback={null}>
                 <Player />
               </Suspense>
             )}
+            {/* Furniture, kiosks, people and animals — all of it read from the
+                build store, so build mode edits the same objects play mode
+                walks around. Inside <Physics> because props carry colliders. */}
             <Suspense fallback={null}>
-              <Interactables />
+              <SceneObjects />
             </Suspense>
           </Physics>
         </Suspense>
 
-        <ProximityDetector />
-        <TapToMove />
-        {!DEBUG_TOPDOWN && <AdaptiveFov />}
+        {/* Build mode owns the camera while it is on, so its controls and the
+            player's follow camera are never mounted at the same time. */}
+        {building && <BuildControls />}
+
+        {!building && (
+          <>
+            <ProximityDetector />
+            <TapToMove />
+          </>
+        )}
+        {playing && <AdaptiveFov />}
 
         {DEBUG_TOPDOWN && (
           <PerspectiveCamera

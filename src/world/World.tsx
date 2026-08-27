@@ -1,12 +1,16 @@
 import { HouseShell } from './HouseShell';
-import { HouseProps } from './HouseProps';
 import { Exterior } from './Exterior';
 import { ROOM_CENTER, tileToWorld, WALL_HEIGHT, type Room } from './HouseMap';
+import { useBuildStore } from '../state/useBuildStore';
 
 /**
  * The world: a small daytime house in its garden. HouseShell draws the
  * building (edge walls, doors, windows, roof + colliders) from the ownership
- * grid, HouseProps dresses the rooms, Exterior lays out the plot.
+ * grid, Exterior lays out the plot.
+ *
+ * Everything movable — furniture, kiosks, people, animals — lives in the build
+ * store and is drawn by <SceneObjects>, which Experience mounts inside the
+ * physics world.
  *
  * The sun does most of the lighting (the house has no ceiling), so the lamps
  * below are only gentle warm fills that keep each room from going flat where
@@ -28,10 +32,14 @@ const LAMPS = [
 ];
 
 export function World() {
+  // The eaves and porch canopy oversail the walls, so from the overhead build
+  // camera they hide exactly the rooms you are trying to lay out. Hidden while
+  // building, back the moment you press Play.
+  const building = useBuildStore((s) => s.mode === 'build');
+
   return (
     <>
-      <HouseShell />
-      <HouseProps />
+      <HouseShell showRoof={!building} />
       <Exterior />
       {LAMPS.map((l, i) => (
         <pointLight key={i} {...l} decay={2} />

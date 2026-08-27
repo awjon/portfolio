@@ -29,17 +29,39 @@ export class SafeModel extends Component<{ children: ReactNode }, { failed: bool
   }
 }
 
+/**
+ * A translucent copy of a material, for the build-mode placement preview.
+ *
+ * `depthWrite` stays ON. Turning it off is the usual reflex for transparency,
+ * but it lets a model's far faces blend over its near ones, and from the
+ * overhead build camera that turns a sofa into a flat coloured smear instead
+ * of something you can recognise before you commit to placing it.
+ */
+function fadeClone(material: THREE.Material): THREE.Material {
+  const m = material.clone();
+  m.transparent = true;
+  m.opacity = 0.7;
+  return m;
+}
+
 /** Clone + recentre (XZ center, feet at y=0) + optional clip playback. */
 export function KitModel({
   url,
   scale = FURNITURE_SCALE,
   animate = false,
   timeScale = 1,
+  ghost = false,
 }: {
   url: string;
   scale?: number;
   animate?: boolean;
   timeScale?: number;
+  /**
+   * Build mode's placement preview: translucent, casts no shadow, and is
+   * invisible to the raycaster so it never intercepts the click meant for the
+   * floor underneath it.
+   */
+  ghost?: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(url, true);
@@ -50,13 +72,23 @@ export function KitModel({
     const c = box.getCenter(new THREE.Vector3());
     cloned.position.set(-c.x, -box.min.y, -c.z);
     cloned.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      if (ghost) {
+        // SkeletonUtils.clone shares materials with the cached GLB, so fading
+        // them in place would fade every already-placed copy of this model
+        // too. Clone per ghost instead.
+        mesh.material = Array.isArray(mesh.material)
+          ? mesh.material.map(fadeClone)
+          : fadeClone(mesh.material);
+        mesh.raycast = () => null;
+        return;
       }
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
     });
     return cloned;
-  }, [scene]);
+  }, [scene, ghost]);
 
   const { actions, names } = useAnimations(animations, group);
   useEffect(() => {
@@ -94,6 +126,15 @@ export interface PropSpec {
   collider?: boolean;
   /** Loop the GLB's authored animation clips. */
   animate?: boolean;
+  /**
+   * Set false to draw the model with no rigid body at all. Build mode does
+   * this: a fixed RigidBody only reads `position` when it is created, so a
+   * dragged prop would leave its collider behind — and remounting one per
+   * pointer-move would thrash the physics world. There is no player capsule in
+   * build mode anyway, so nothing needs colliding with until the layout is
+   * committed and play resumes.
+   */
+  physics?: boolean;
 }
 
 function propPosition(spec: PropSpec): [number, number, number] {
@@ -130,7 +171,7 @@ export function Prop(spec: PropSpec) {
 
   return (
     <SafeModel>
-      {spec.collider ? (
+      {spec.collider && spec.physics !== false ? (
         <RigidBody type="fixed" colliders={false} position={position} rotation={[0, spec.rotationY ?? 0, 0]}>
           <PropCollider url={spec.url} scale={scale} />
           {model}

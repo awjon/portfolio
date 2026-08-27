@@ -117,4 +117,11 @@ export const npcDialog: Record<string, string[]> = {
   'npc-animal-parrot': ['[Placeholder] "PLACEHOLDER! PLACEHOLDER!" squawks the parrot.'],
   'npc-animal-crab': ['[Placeholder] The crab scuttles sideways, claws up.'],
   'npc-animal-chick': ['[Placeholder] Peep peep. The chick pecks at the path.'],
+
+  // Anyone a visitor adds in build mode. They all share this entry — give a
+  // newcomer their own lines by setting a different panelId on them.
+  'npc-newcomer': [
+    '[Placeholder] Hello! Someone put me here in build mode.',
+    "[Placeholder] I'll say whatever you write under 'npc-newcomer' in src/content/projects.ts.",
+  ],
 };

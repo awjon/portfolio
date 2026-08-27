@@ -57,6 +57,20 @@ const STUCK_GRACE = 1;
 const TOUCH = isTouchDevice();
 
 /**
+ * Where to (re)appear. Leaving build mode remounts the whole controller, and
+ * dropping the visitor back at the front gate every time would undo the walk
+ * they just made to the room they were decorating. `playerPos` is a live
+ * vector in the store that outlives the unmount, so the only case that needs
+ * the authored spawn is the very first mount, when it is still at the origin.
+ * The small lift clears whatever they were standing on.
+ */
+function resumePosition(): [number, number, number] {
+  const p = useGameStore.getState().playerPos;
+  if (p.lengthSq() === 0) return SPAWN;
+  return [p.x, p.y + 0.4, p.z];
+}
+
+/**
  * ecctrl gives us a floating-capsule physics controller with WASD movement,
  * Shift-to-run, Space-to-jump, and a collision-aware follow camera.
  * We read its velocity each frame to derive idle/walk/run/jump/fall, and
@@ -231,7 +245,7 @@ export function Player() {
       // which pitches the capsule forward; walking into a wall at speed then
       // tips the character right over. Applying it at the centre keeps them up.
       moveImpulsePointY={0}
-      position={SPAWN}
+      position={resumePosition()}
     >
       {/* The capsule hovers, so this offset is driven each frame from a ray
           down to the real floor (see above) rather than being a constant. */}
