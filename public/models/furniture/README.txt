@@ -1,23 +1,19 @@
 Kenney Furniture Kit (CC0) goes here — https://kenney.nl/assets/furniture-kit
 
-The house engine (src/world/) references these files via the asset registry in
-src/world/HouseAssets.ts. Furniture renders as the real GLB (falling back to a
-coloured box if a file is missing).
+The house (src/world/) uses these files directly: HouseShell.tsx builds the
+shell and HouseProps.tsx the furniture, both by path.
 
 The shell is EDGE-based, the way Kenney designed it: wall panels sit on cell
-boundaries and corner caps at the junctions, so rooms sit directly against each
-other and furniture can hug a wall. HouseRenderer fits each piece to the tile
-size at load (measuring its bbox), so the exact native dimensions don't matter.
+boundaries, so rooms sit directly against each other and furniture can hug a
+wall. The kit is authored at 1 unit per tile, so HouseMap.TILE doubles as the
+kit's scale — change it and the whole building rescales consistently.
 
-Expected filenames (edit HouseAssets.ts if your extract differs — that registry
-is the ONLY place paths live):
-
-  Shell (walls on edges, corners at L-junctions)
-    floorFull.glb           floor
-    wall.glb                straight wall panel (per edge)
-    wallCorner.glb          corner cap (at L-junction vertices)
-    wallDoorwayWide.glb     door (passable opening on an interior edge)
-    wallWindowSlide.glb     window (exterior edge)
+Shell pieces used (see HouseShell.tsx):
+    floorFull.glb           floor tile, one per cell
+    wall.glb                straight wall panel (per boundary edge)
+    wallDoorwayWide.glb     doorway (a ~1.3-unit-wide walk-through opening)
+    wallWindow.glb          window (exterior edges, on a fixed rhythm)
+    doorwayFront.glb        the front door, standing open on the porch
 
   Living room / general
     loungeDesignSofa.glb    sofa

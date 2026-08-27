@@ -5,7 +5,7 @@ import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.j
 import { Interactable } from './Interactable';
 import { Label } from './Label';
 import { useGameStore } from '../state/useGameStore';
-import { ANIMAL_SCALE } from '../world/StationMap';
+import { ANIMAL_SCALE } from '../world/HouseMap';
 
 export interface AnimalProps {
   /** e.g. 'cat' → /models/animals/animal-cat.glb and dialog key npc-animal-cat */
@@ -59,11 +59,11 @@ export function Animal({
   const scale = ANIMAL_SCALE * size;
 
   return (
-    <Interactable id={id} kind="animal" position={position} radius={2} panelId={`npc-${id}`} label="Say hi">
+    <Interactable id={id} kind="animal" position={position} radius={1.4} panelId={`npc-${id}`} label="Say hi">
       <group ref={group} rotation={[0, rotationY, 0]} scale={scale}>
         <primitive object={cloned} />
       </group>
-      <Label text={name ?? species} position={[0, 2.2 * scale + 0.35, 0]} color="#ffd166" fontSize={0.18} />
+      <Label text={name ?? species} position={[0, 2.2 * scale + 0.3, 0]} color="#ffb703" fontSize={0.17} />
     </Interactable>
   );
 }

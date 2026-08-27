@@ -82,34 +82,34 @@ export const projects: Project[] = [
 ];
 
 // ── NPC & animal dialog, keyed by panel id ('npc-<id>' / 'npc-animal-<species>').
-// Everything below the guide is a PLACEHOLDER — edit the lines freely; the
+// Everything below the host is a PLACEHOLDER — edit the lines freely; the
 // world doesn't care how many lines each entry has.
 export const npcDialog: Record<string, string[]> = {
-  'npc-guide': [
-    'Welcome to the station. Use WASD to walk, Shift to run, Space to jump.',
-    'The arcade hall is through the west door — press E at any glowing cabinet to check out a project.',
-    'The lab, the lounge, and the city outside are all open. Explore at your own pace.',
+  'npc-host': [
+    'Morning! Come in — WASD to walk, Shift to run, Space to jump.',
+    'The games den is off the far end of the hall: press E at any cabinet to open a project.',
+    'Kitchen, study and living room are all open, and the animals are out in the garden.',
   ],
-  'npc-visitor': ['[Placeholder] Just moving some boxes in. Edit me in src/content/projects.ts.'],
-  'npc-gamer': ['[Placeholder] This pinball machine is rigged, I swear.'],
-  'npc-highscore': ['[Placeholder] I hold the high score on every cabinet here.'],
-  'npc-employee': ['[Placeholder] Welcome to the arcade! Tickets for prizes at the counter.'],
-  'npc-scientist': ['[Placeholder] Careful with the equipment, please.'],
+  'npc-visitor': ['[Placeholder] Just dropping something off. Edit me in src/content/projects.ts.'],
+  'npc-cook': ['[Placeholder] Lunch is nearly ready. Mind the hob.'],
+  'npc-guest': ['[Placeholder] Best kitchen table in the neighbourhood.'],
   'npc-analyst': ['[Placeholder] The numbers on this screen never sleep.'],
-  'npc-lounger': ['[Placeholder] Best sofa in the station. Find your own.'],
   'npc-reader': ['[Placeholder] Have you read anything good lately?'],
-  'npc-walker': ['[Placeholder] Nice night for a walk around the block.'],
-  'npc-parkgoer': ['[Placeholder] The animals in this park are very friendly.'],
+  'npc-lounger': ['[Placeholder] Best sofa in the house. Find your own.'],
+  'npc-bookworm': ['[Placeholder] One more chapter, then I will move. Promise.'],
+  'npc-dj': ['[Placeholder] I am in charge of the record player today.'],
+  'npc-gamer': ['[Placeholder] This pinball machine is rigged, I swear.'],
+  'npc-challenger': ['[Placeholder] I hold the high score on every cabinet in here.'],
 
-  // Animals
-  'npc-animal-cat': ['[Placeholder] Mrrp. The lab cat ignores you affectionately.'],
-  'npc-animal-dog': ['[Placeholder] Woof! The lounge dog wants belly rubs.'],
+  // Animals — all of them live outside, in the garden and on the verge
+  'npc-animal-cat': ['[Placeholder] Mrrp. The cat ignores you affectionately.'],
+  'npc-animal-dog': ['[Placeholder] Woof! The garden dog wants belly rubs.'],
   'npc-animal-penguin': ['[Placeholder] The penguin waddles in a small circle.'],
   'npc-animal-deer': ['[Placeholder] The deer glances up, then keeps grazing.'],
   'npc-animal-fox': ['[Placeholder] The fox eyes you with suspicion.'],
   'npc-animal-bunny': ["[Placeholder] The bunny's nose twitches."],
-  'npc-animal-monkey': ['[Placeholder] The monkey has been dancing all evening.'],
-  'npc-animal-giraffe': ['[Placeholder] The giraffe is browsing the tall planters.'],
+  'npc-animal-monkey': ['[Placeholder] The monkey has been dancing all morning.'],
+  'npc-animal-giraffe': ['[Placeholder] The giraffe is browsing the side hedge.'],
   'npc-animal-tiger': ['[Placeholder] The tiger is surprisingly chill about all this.'],
   'npc-animal-bee': ['[Placeholder] Bzzz. The bee is doing important bee business.'],
   'npc-animal-caterpillar': ['[Placeholder] The caterpillar inches along, unbothered.'],

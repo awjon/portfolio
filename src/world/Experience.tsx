@@ -6,17 +6,21 @@ import {
   Preload,
   AdaptiveDpr,
   AdaptiveEvents,
-  Stars,
+  Sky,
   PerspectiveCamera,
 } from '@react-three/drei';
-import { Component, type ReactNode, Suspense } from 'react';
+import { Component, type ReactNode, Suspense, useEffect } from 'react';
+import { useThree } from '@react-three/fiber';
+import type * as THREE from 'three';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { World } from './World';
-import { StationColliders } from './StationShell';
+import { HouseColliders } from './HouseShell';
 import { Player } from '../player/Player';
 import { Interactables } from './Interactables';
 import { ProximityDetector } from '../interactions/ProximityDetector';
 import { RenderLoopController } from './RenderLoopController';
+import { TapToMove } from './TapToMove';
+import { useGameStore } from '../state/useGameStore';
 
 // ecctrl reads these key names via drei's KeyboardControls.
 const keyboardMap = [
@@ -28,6 +32,36 @@ const keyboardMap = [
   { name: 'run', keys: ['Shift'] },
   { name: 'action1', keys: ['KeyE'] }, // interact (M2)
 ];
+/**
+ * Same action names, no keys bound to any of them — swapped in while a panel
+ * is open so WASD/Space/Shift stop steering the character. drei's
+ * KeyboardControls derives its store from the `map` prop, so this is a plain,
+ * reactive prop swap: no event-listener races, and it needs no cooperation
+ * from ecctrl (which just reads "nothing is pressed").
+ */
+const FROZEN_KEYBOARD_MAP = keyboardMap.map((m) => ({ ...m, keys: [] as string[] }));
+
+/**
+ * A phone held upright has a very narrow horizontal view at a fixed vertical
+ * FOV — enough that the character alone fills most of the frame, which makes
+ * tap-to-move hard to aim. Widen the lens on portrait aspects (not all the way
+ * to a constant horizontal FOV, which lands somewhere around 110° and looks
+ * like a fisheye).
+ */
+function AdaptiveFov() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+  useEffect(() => {
+    if (!camera.isPerspectiveCamera) return;
+    const aspect = size.width / Math.max(1, size.height);
+    const fov = aspect < 0.85 ? 68 : 55;
+    if (camera.fov !== fov) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size]);
+  return null;
+}
 
 /** Renders nothing if a child throws (e.g. a blocked Environment HDR fetch). */
 class SafeBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -44,9 +78,32 @@ class SafeBoundary extends Component<{ children: ReactNode }, { failed: boolean 
 // for checking world layout in screenshots.
 const DEBUG_TOPDOWN = typeof window !== 'undefined' && window.location.hash.includes('debug');
 
+/**
+ * `#debug` gives a bird's-eye view of the whole plot; `#debug=x,y,z` or
+ * `#debug=x,y,z,tx,ty,tz` moves that camera, which is handy for eyeballing a
+ * single room while laying furniture out.
+ */
+const DEBUG_CAM = (() => {
+  if (!DEBUG_TOPDOWN) return { position: [0, 34, 22] as const, target: [0, 0, 0] as const };
+  const n = (window.location.hash.match(/debug=([-\d.,]+)/)?.[1] ?? '')
+    .split(',')
+    .map(Number)
+    .filter((v) => !Number.isNaN(v));
+  return {
+    position: (n.length >= 3 ? [n[0], n[1], n[2]] : [0, 34, 22]) as readonly [number, number, number],
+    target: (n.length >= 6 ? [n[3], n[4], n[5]] : [0, 0, 0]) as readonly [number, number, number],
+  };
+})();
+
+/** Mid-morning sun — shared by <Sky> and the shadow-casting key light. */
+const SUN: [number, number, number] = [22, 21, 27];
+
 export function Experience() {
+  // A dialogue/project panel blocks WASD/Space, but the world keeps animating
+  // (see RenderLoopController) — only movement input is gated.
+  const isPaused = useGameStore((s) => s.isPaused);
   return (
-    <KeyboardControls map={keyboardMap}>
+    <KeyboardControls map={isPaused ? FROZEN_KEYBOARD_MAP : keyboardMap}>
       <Canvas
         shadows
         camera={{ fov: 55, position: [0, 5, 10] }}
@@ -54,28 +111,29 @@ export function Experience() {
         performance={{ min: 0.5 }}
         gl={{ powerPreference: 'high-performance', antialias: false }}
       >
-        <color attach="background" args={['#0b0e18']} />
-        <fog attach="fog" args={['#0b0e18', 45, 150]} />
-        <Stars radius={140} depth={40} count={1600} factor={3.5} saturation={0} fade />
+        <color attach="background" args={['#bcdcf2']} />
+        <fog attach="fog" args={['#cfe4f5', 45, 130]} />
+        <Sky sunPosition={SUN} turbidity={3} rayleigh={0.9} mieCoefficient={0.006} />
 
-        {/* Night-time base fill; per-room point lights add character. */}
-        <ambientLight intensity={0.38} color="#8794c4" />
+        {/* Daylight base fill: warm sky above, bounced grass below. */}
+        <hemisphereLight args={['#e6f0fb', '#8fa96a', 0.85]} />
 
-        {/* Moonlight key, casting shadows over the whole block. */}
+        {/* The sun. Shadow frustum wraps the plot, not the whole ground plane. */}
         <directionalLight
           castShadow
-          position={[25, 40, -15]}
-          intensity={0.55}
-          color="#bcc9ff"
+          position={SUN}
+          intensity={2.6}
+          color="#fff3d8"
           shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-70}
-          shadow-camera-right={70}
-          shadow-camera-top={70}
-          shadow-camera-bottom={-70}
+          shadow-camera-left={-34}
+          shadow-camera-right={34}
+          shadow-camera-top={34}
+          shadow-camera-bottom={-34}
+          shadow-normalBias={0.04}
         />
 
-        {/* Gentle warm fill from the street side to lift shadowed walls. */}
-        <directionalLight position={[-20, 12, 25]} intensity={0.18} color="#ffd9a8" />
+        {/* Cool sky fill from the opposite side so shaded walls keep their form. */}
+        <directionalLight position={[-24, 16, 22]} intensity={0.35} color="#dbe8ff" />
 
         {/* Each subtree gets its OWN Suspense so no loader can blank the others.
             In particular the house (World) renders even if the interactables'
@@ -85,7 +143,7 @@ export function Experience() {
           <Physics timeStep={1 / 60}>
             {/* Colliders are pure data — mounted outside Suspense so the
                 ground exists before the player capsule starts simulating. */}
-            <StationColliders />
+            <HouseColliders />
             <Suspense fallback={null}>
               <World />
             </Suspense>
@@ -101,13 +159,15 @@ export function Experience() {
         </Suspense>
 
         <ProximityDetector />
+        <TapToMove />
+        {!DEBUG_TOPDOWN && <AdaptiveFov />}
 
         {DEBUG_TOPDOWN && (
           <PerspectiveCamera
             makeDefault
-            position={[0, 75, 45]}
+            position={[...DEBUG_CAM.position]}
             fov={50}
-            onUpdate={(c) => c.lookAt(0, 0, 0)}
+            onUpdate={(c) => c.lookAt(...(DEBUG_CAM.target as unknown as [number, number, number]))}
           />
         )}
 
@@ -116,7 +176,7 @@ export function Experience() {
             the scene. */}
         <SafeBoundary>
           <Suspense fallback={null}>
-            <Environment preset="night" />
+            <Environment preset="park" />
           </Suspense>
         </SafeBoundary>
 
@@ -136,12 +196,12 @@ export function Experience() {
 
         <EffectComposer>
           <Bloom
-            luminanceThreshold={0.85}
+            luminanceThreshold={1.0}
             luminanceSmoothing={0.9}
-            intensity={0.5}
+            intensity={0.25}
             mipmapBlur
           />
-          <Vignette eskil={false} offset={0.2} darkness={0.55} />
+          <Vignette eskil={false} offset={0.25} darkness={0.3} />
         </EffectComposer>
       </Canvas>
     </KeyboardControls>

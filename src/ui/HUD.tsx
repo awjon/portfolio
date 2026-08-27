@@ -28,10 +28,10 @@ export function HUD({ isTouch = false }: { isTouch?: boolean }) {
 
   return (
     <>
-      {/* Controls hint — keyboard on desktop, joystick note on touch. */}
+      {/* Controls hint — keys on desktop, the gesture scheme on touch. */}
       <div className="pointer-events-none fixed bottom-4 left-4 z-40 font-mono text-xs text-white/70">
         {isTouch ? (
-          <div>Drag the stick to move · tap ● to interact</div>
+          <div>Double-tap to walk · drag to look</div>
         ) : (
           <>
             <div>WASD — move</div>
@@ -47,7 +47,7 @@ export function HUD({ isTouch = false }: { isTouch?: boolean }) {
       {rec && !activePanel && (
         <div className="pointer-events-none fixed bottom-8 left-1/2 z-40 -translate-x-1/2 rounded-md border border-cyan-400/50 bg-black/60 px-4 py-2 font-mono text-sm text-cyan-300">
           {isTouch ? (
-            <>Tap <span className="font-bold text-white">●</span> to {label}</>
+            <>Stop here to {label}</>
           ) : (
             <>Press <span className="font-bold text-white">E</span> to {label}</>
           )}

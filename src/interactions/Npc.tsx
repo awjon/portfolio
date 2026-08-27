@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { Interactable } from './Interactable';
 import { Label } from './Label';
-import { CHAR_SCALE } from '../world/StationMap';
+import { CHAR_SCALE } from '../world/HouseMap';
 
 export interface NpcProps {
   id: string;
@@ -47,12 +47,12 @@ export function Npc({ id, model, position, rotationY = 0, name, pose = 'idle' }:
   }, [actions, names, pose]);
 
   return (
-    <Interactable id={id} kind="npc" position={position} radius={2.2} panelId={`npc-${id}`} label="Talk">
+    <Interactable id={id} kind="npc" position={position} radius={1.5} panelId={`npc-${id}`} label="Talk">
       <group ref={group} rotation={[0, rotationY, 0]} scale={CHAR_SCALE}>
         <primitive object={cloned} />
       </group>
       {/* Floating name tag */}
-      <Label text={name} position={[0, 1.75, 0]} color="#39ff14" fontSize={0.22} />
+      <Label text={name} position={[0, 1.5, 0]} color="#39ff14" fontSize={0.19} />
     </Interactable>
   );
 }

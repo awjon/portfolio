@@ -22,6 +22,15 @@ const LOCOMOTION: Record<MoveState, string> = {
   fall: 'fall',
 };
 
+/**
+ * The root bone's vertical channel is left exactly as authored. 'walk' and
+ * 'sprint' lift the body each stride to pair with the leg reaching down, so
+ * the planted foot stays at floor level; zeroing it (an earlier attempt at
+ * the "character floats" bug) only made the extended leg clip through the
+ * floor. That bug was really the capsule's hover height — the model hung at a
+ * fixed offset that assumed the capsule rests ON the ground when it actually
+ * floats above it, which Player now measures per frame with its own ray.
+ */
 export function Character() {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(MODEL, true);

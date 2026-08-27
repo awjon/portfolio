@@ -1,99 +1,203 @@
 /**
  * Exterior
  * --------
- * The night-time city block around the station, built from the Kenney city +
- * road kits: a street along the south edge with streetlights and a crosswalk
- * at the station entrance, a row of storefront buildings across the road, a
- * skyline of skyscrapers / low-detail blocks to the north, a small park to
- * the east, and roadwork details. Purely dressing — buildings collide, the
- * rest doesn't.
+ * A sunny suburban plot around the house: lawn, hedged boundary, a path from
+ * the porch to the pavement, a quiet street with neighbouring houses, and
+ * trees in the back and side gardens (which is where the animals live).
+ *
+ * The whole block is about half the extent of the old night-time city — see
+ * the fence colliders in HouseShell for the actual walkable bounds.
  */
 
 import { useMemo } from 'react';
-import { InstancedKit, type KitTransform } from './InstancedKit';
+import { InstancedKit, InstancedShapes, type KitTransform } from './InstancedKit';
 import { Props, SafeModel, type PropSpec } from './Props';
+import {
+  ARCH_SCALE,
+  BACK_GROWTH,
+  EAST_GROWTH,
+  FRONT_DOOR,
+  FRONT_GROWTH,
+  HOUSE,
+  WEST_GROWTH,
+  tileToWorld,
+} from './HouseMap';
 
 const C = '/models/city/';
 const R = '/models/road/';
+const F = '/models/furniture/';
 
 const ROAD_SCALE = 4;
-const ROAD_Z = 30;
-const ENTRANCE_X = -12; // aligned with the station's main (hub) door
+// The whole front approach (wall → hedge gate → pavement → road) is one
+// nested chain; pushing the wall out by FRONT_GROWTH without the rest of the
+// chain crams the hedge gate onto the road (see buildHedge's z1).
+const ROAD_Z = 17 + FRONT_GROWTH;
+const PAVEMENT_Z = 14.2 + FRONT_GROWTH;
+const PATH_X = FRONT_DOOR.x;
 
+/** Road tiles are laid on a grid anchored to the path so the crossing lines up. */
 function buildRoad(): { straights: KitTransform[]; lights: KitTransform[] } {
   const straights: KitTransform[] = [];
   const lights: KitTransform[] = [];
-  for (let x = -48; x <= 48; x += ROAD_SCALE) {
-    if (x === ENTRANCE_X) continue; // crossing piece placed separately
+  for (let k = -11; k <= 11; k++) {
+    const x = PATH_X + k * ROAD_SCALE;
+    if (k === 0) continue; // the crossing piece goes here
     straights.push({ position: [x, 0.01, ROAD_Z], scale: ROAD_SCALE });
   }
-  for (const x of [-44, -32, -20, -2, 10, 22, 36, 46]) {
-    lights.push({ position: [x, 0, ROAD_Z - 2.4], rotationY: Math.PI, scale: ROAD_SCALE });
+  for (const k of [-6, -3, 2, 5]) {
+    lights.push({ position: [PATH_X + k * ROAD_SCALE, 0, ROAD_Z - 2.6], rotationY: Math.PI, scale: 6 });
   }
   return { straights, lights };
 }
 
+/**
+ * Low hedge round the property, with a gap where the front path crosses it.
+ * z1 (the front row) tracks FRONT_GROWTH: it's how far the hedge sits from
+ * the wall, and that wall just moved — leaving z1 fixed would put the hedge's
+ * gate almost on top of the (now closer) porch, catching the player's spawn
+ * point in it.
+ */
+function buildHedge(): KitTransform[] {
+  const out: KitTransform[] = [];
+  const x0 = -24, x1 = 24, z0 = -21, z1 = 12.6 + FRONT_GROWTH;
+  const step = 1.6;
+  const box = (x: number, z: number, sx: number, sz: number) =>
+    out.push({ position: [x, 0.42, z], scale: [sx, 0.84, sz] });
+  for (let x = x0; x <= x1; x += step) {
+    box(x, z0, step * 1.02, 0.75); // back
+    if (Math.abs(x - PATH_X) > 1.8) box(x, z1, step * 1.02, 0.75); // front, minus the gate
+  }
+  for (let z = z0; z <= z1; z += step) {
+    box(x0, z, 0.75, step * 1.02);
+    box(x1, z, 0.75, step * 1.02);
+  }
+  return out;
+}
+
+/** [x, z, scale] — trunk + two canopy blobs are instanced from these. */
+const TREES: [number, number, number][] = [
+  // back garden (the two nearest the old wall pushed out by BACK_GROWTH)
+  [-16, -14, 1.15], [-9, -18, 0.95], [-1, -15, 1.25], [6, -18.5, 1.0], [14, -13.5, 1.1],
+  [-20, -8 + BACK_GROWTH, 0.9], [19, -8.5 + BACK_GROWTH, 1.05],
+  // side gardens
+  [-15, 1, 1.0], [-17.5, 8, 0.85], [15.5, -2, 0.95], [18, 7, 1.1],
+  // front garden + verge (pushed out by FRONT_GROWTH so canopies clear the roof)
+  [-8, 10 + FRONT_GROWTH, 0.8], [7, 10.5 + FRONT_GROWTH, 0.9],
+  // across the street
+  [-18, 21, 1.2], [10, 20.5, 1.05], [22, 22, 0.95],
+];
+
+function buildTrees() {
+  const trunks: KitTransform[] = [];
+  const canopyLow: KitTransform[] = [];
+  const canopyTop: KitTransform[] = [];
+  TREES.forEach(([x, z, s], i) => {
+    const spin = i * 1.7;
+    trunks.push({ position: [x, 1.05 * s, z], rotationY: spin, scale: [0.22 * s, 2.1 * s, 0.22 * s] });
+    canopyLow.push({ position: [x, 2.3 * s, z], rotationY: spin, scale: [1.5 * s, 1.15 * s, 1.5 * s] });
+    canopyTop.push({ position: [x + 0.15 * s, 3.25 * s, z - 0.1 * s], rotationY: spin * 2, scale: [1.05 * s, 0.95 * s, 1.05 * s] });
+  });
+  return { trunks, canopyLow, canopyTop };
+}
+
 const BUILDINGS: PropSpec[] = [
-  // Storefront row across the road, facing the station.
-  ...(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'] as const).map((v, i) => ({
+  // Neighbouring houses across the street, facing back this way. Z tracks the
+  // same front-approach chain as ROAD_Z/PAVEMENT_Z — they're the far edge of it.
+  ...(['a', 'b', 'c', 'd', 'e', 'f'] as const).map((v, i) => ({
     url: `${C}building-${v}.glb`,
-    at: [-45 + i * 9, 39] as [number, number],
+    at: [-30 + i * 12, 24 + FRONT_GROWTH] as [number, number],
     rotationY: Math.PI,
-    scale: 5,
+    scale: 4,
     collider: true,
   })),
-  // Skyline behind the station.
-  { url: C + 'building-skyscraper-a.glb', at: [-34, -34], scale: 5, collider: true },
-  { url: C + 'building-skyscraper-b.glb', at: [-14, -37], scale: 5, collider: true },
-  { url: C + 'building-skyscraper-c.glb', at: [6, -35], scale: 5, collider: true },
-  { url: C + 'building-skyscraper-d.glb', at: [26, -37], scale: 5, collider: true },
-  { url: C + 'building-skyscraper-e.glb', at: [44, -34], scale: 4.5, collider: true },
-  { url: C + 'low-detail-building-a.glb', at: [-46, -28], scale: 4 },
-  { url: C + 'low-detail-building-b.glb', at: [-24, -28], scale: 4 },
-  { url: C + 'low-detail-building-c.glb', at: [-4, -28], scale: 4 },
-  { url: C + 'low-detail-building-d.glb', at: [16, -28], scale: 4 },
-  { url: C + 'low-detail-building-e.glb', at: [36, -28], scale: 4 },
-  { url: C + 'low-detail-building-f.glb', at: [52, -28], scale: 4 },
-  { url: C + 'low-detail-building-wide-a.glb', at: [-56, -32], scale: 4 },
-  { url: C + 'low-detail-building-wide-b.glb', at: [56, -33], scale: 4 },
+  // The rest of the neighbourhood, out past the back hedge.
+  { url: C + 'low-detail-building-a.glb', at: [-26, -28], scale: 4 },
+  { url: C + 'low-detail-building-c.glb', at: [-9, -30], scale: 4 },
+  { url: C + 'low-detail-building-e.glb', at: [8, -29], scale: 4 },
+  { url: C + 'low-detail-building-wide-b.glb', at: [26, -28], scale: 4 },
 ];
 
 const DETAILS: PropSpec[] = [
-  // Crosswalk connects the entrance path to the sidewalk.
-  { url: R + 'road-crossing.glb', at: [ENTRANCE_X, ROAD_Z], offset: [0, 0.011, 0], scale: ROAD_SCALE },
-  // Roadwork near the crossing.
-  { url: R + 'construction-cone.glb', at: [-5, 27.5], scale: ROAD_SCALE },
-  { url: R + 'construction-cone.glb', at: [-3.6, 26.6], rotationY: 0.7, scale: ROAD_SCALE },
-  { url: R + 'construction-barrier.glb', at: [-1, 27], rotationY: 0.15, scale: ROAD_SCALE },
-  { url: R + 'construction-light.glb', at: [1.6, 27.2], scale: ROAD_SCALE },
-  { url: R + 'sign-highway.glb', at: [50, 26.5], rotationY: Math.PI, scale: ROAD_SCALE },
-  // Little park east of the station (the animals hang out here).
-  { url: C + 'detail-parasol-a.glb', at: [32, 1], scale: 4 },
-  { url: C + 'detail-parasol-b.glb', at: [36, 6], scale: 4 },
-  { url: '/models/furniture/bench.glb', at: [31, 3], rotationY: -Math.PI / 2, scale: 1.5, collider: true },
-  { url: '/models/furniture/bench.glb', at: [35, -1.5], rotationY: Math.PI, scale: 1.5, collider: true },
-  { url: '/models/furniture/pottedPlant.glb', at: [29, -3], scale: 1.5 },
-  // West yard planters.
-  { url: '/models/furniture/pottedPlant.glb', at: [-30, 8], scale: 1.8 },
-  { url: '/models/furniture/pottedPlant.glb', at: [-33, -3], scale: 1.8 },
+  { url: R + 'road-crossing.glb', at: [PATH_X, ROAD_Z], offset: [0, 0.011, 0], scale: ROAD_SCALE },
+  // Front garden — pushed out by FRONT_GROWTH, and the flanking pots' offset
+  // from the path widened to match the (now wider) porch canopy over them.
+  { url: F + 'bench.glb', at: [4.5, 9 + FRONT_GROWTH], rotationY: Math.PI, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [PATH_X - 1.6 * ARCH_SCALE, 6.6 + FRONT_GROWTH], scale: 1.8 },
+  { url: F + 'pottedPlant.glb', at: [PATH_X + 1.6 * ARCH_SCALE, 6.6 + FRONT_GROWTH], scale: 1.8 },
+  // Back garden — where most of the animals hang out — pushed out by BACK_GROWTH
+  { url: C + 'detail-parasol-a.glb', at: [-4, -10 + BACK_GROWTH], scale: 5 },
+  { url: F + 'bench.glb', at: [-7.5, -9.4 + BACK_GROWTH], rotationY: -Math.PI / 2, scale: 2, collider: true },
+  { url: F + 'bench.glb', at: [2, -11.5 + BACK_GROWTH], rotationY: 0.4, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [-6.6, -6.9 + BACK_GROWTH], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-3.9, -6.9 + BACK_GROWTH], scale: 1.6 },
+  // Side gardens — pushed out by EAST_GROWTH / WEST_GROWTH
+  { url: C + 'detail-parasol-b.glb', at: [13 + EAST_GROWTH, 3], scale: 5 },
+  { url: F + 'bench.glb', at: [11.5 + EAST_GROWTH, 5.4], rotationY: -Math.PI / 2, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [10.6 + EAST_GROWTH, 1.4], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-11 + WEST_GROWTH, -1], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-11 + WEST_GROWTH, 3.5], scale: 1.6 },
 ];
 
-// Walkway pads from the hub door down to the crosswalk.
-const WALKWAY: KitTransform[] = [18, 20, 22, 24, 26].map((z) => ({
-  position: [ENTRANCE_X, 0.004, z] as [number, number, number],
-  scale: 2,
-}));
+/**
+ * Paving: the front path, plus small pads at the back and side doors. The
+ * back/side pads are centred on those doors' own edge position (via
+ * tileToWorld) so they track the door exactly regardless of TILE/ARCH_SCALE;
+ * their offset-from-the-door and size are scaled by ARCH_SCALE to match the
+ * now-wider doors.
+ */
+const PAVING: { pos: [number, number, number]; size: [number, number] }[] = [
+  { pos: [PATH_X, 0.008, (HOUSE.maxZ + PAVEMENT_Z) / 2], size: [2.2 * ARCH_SCALE, PAVEMENT_Z - HOUSE.maxZ + 0.6] },
+  { pos: [0, 0.006, PAVEMENT_Z], size: [96, 1.8] },
+  { pos: [tileToWorld(2, 0)[0], 0.008, HOUSE.minZ - 1.3 * ARCH_SCALE], size: [2.2 * ARCH_SCALE, 2.6 * ARCH_SCALE] },
+  { pos: [HOUSE.maxX + 1.3 * ARCH_SCALE, 0.008, tileToWorld(0, 5)[2]], size: [2.6 * ARCH_SCALE, 2.2 * ARCH_SCALE] },
+];
+
+/**
+ * Footprints of the outdoor things a path must go round, for NavGrid. Only the
+ * big immovable stuff: the hedge ring and the houses across the road. Benches
+ * and planters are small enough to walk around (or bump into and give up on).
+ */
+export const EXTERIOR_BLOCKERS = [
+  ...buildHedge().map((h) => {
+    const [sx, , sz] = h.scale as [number, number, number];
+    return {
+      minX: h.position[0] - sx / 2,
+      maxX: h.position[0] + sx / 2,
+      minZ: h.position[2] - sz / 2,
+      maxZ: h.position[2] + sz / 2,
+    };
+  }),
+  // City-kit houses are ~0.9 units square natively; at scale 4 that is ~3.6.
+  ...BUILDINGS.filter((b) => b.at).map((b) => {
+    const half = ((b.scale ?? 4) * 0.9) / 2;
+    return {
+      minX: b.at![0] - half,
+      maxX: b.at![0] + half,
+      minZ: b.at![1] - half,
+      maxZ: b.at![1] + half,
+    };
+  }),
+];
 
 export function Exterior() {
   const road = useMemo(buildRoad, []);
+  const hedge = useMemo(buildHedge, []);
+  const trees = useMemo(buildTrees, []);
 
   return (
     <>
-      {/* Ground plane (dark night grass); the physics slab lives in StationShell. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
-        <planeGeometry args={[190, 150]} />
-        <meshStandardMaterial color="#1a2420" roughness={1} />
+      {/* Lawn. The physics slab lives in HouseShell so it never waits on assets. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 4]} receiveShadow>
+        <planeGeometry args={[96, 76]} />
+        <meshStandardMaterial color="#6f9c4f" roughness={1} />
       </mesh>
+
+      {PAVING.map((p, i) => (
+        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={p.pos} receiveShadow>
+          <planeGeometry args={p.size} />
+          <meshStandardMaterial color="#cfc8b8" roughness={1} />
+        </mesh>
+      ))}
 
       <SafeModel>
         <InstancedKit url={R + 'road-straight.glb'} transforms={road.straights} castShadow={false} />
@@ -101,9 +205,24 @@ export function Exterior() {
       <SafeModel>
         <InstancedKit url={R + 'light-curved.glb'} transforms={road.lights} />
       </SafeModel>
-      <SafeModel>
-        <InstancedKit url="/models/station/structure-panel.glb" transforms={WALKWAY} castShadow={false} />
-      </SafeModel>
+
+      <InstancedShapes transforms={hedge} receiveShadow={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#3f6b34" roughness={1} />
+      </InstancedShapes>
+
+      <InstancedShapes transforms={trees.trunks}>
+        <cylinderGeometry args={[0.42, 0.55, 1, 7]} />
+        <meshStandardMaterial color="#7a5637" roughness={1} />
+      </InstancedShapes>
+      <InstancedShapes transforms={trees.canopyLow}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#4e8f42" roughness={1} flatShading />
+      </InstancedShapes>
+      <InstancedShapes transforms={trees.canopyTop}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#5da84d" roughness={1} flatShading />
+      </InstancedShapes>
 
       <Props items={BUILDINGS} />
       <Props items={DETAILS} />

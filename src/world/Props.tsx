@@ -16,7 +16,7 @@ import { useGLTF, useAnimations } from '@react-three/drei';
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { KIT_SCALE, tileToWorld } from './StationMap';
+import { FURNITURE_SCALE, tileToWorld } from './HouseMap';
 
 export class SafeModel extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -32,7 +32,7 @@ export class SafeModel extends Component<{ children: ReactNode }, { failed: bool
 /** Clone + recentre (XZ center, feet at y=0) + optional clip playback. */
 export function KitModel({
   url,
-  scale = KIT_SCALE,
+  scale = FURNITURE_SCALE,
   animate = false,
   timeScale = 1,
 }: {
@@ -123,7 +123,9 @@ function PropCollider({ url, scale }: { url: string; scale: number }) {
 
 export function Prop(spec: PropSpec) {
   const position = propPosition(spec);
-  const scale = spec.scale ?? KIT_SCALE;
+  // Furniture/city-kit props default to FURNITURE_SCALE, not the (bigger)
+  // architecture scale — the house grows around them, they don't grow with it.
+  const scale = spec.scale ?? FURNITURE_SCALE;
   const model = <KitModel url={spec.url} scale={scale} animate={spec.animate} />;
 
   return (

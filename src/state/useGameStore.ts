@@ -44,12 +44,21 @@ interface GameState {
   nearbyInteractable: string | null;
   setNearbyInteractable: (id: string | null) => void;
 
+  // Tap-to-move destination (touch only). `nonce` lets the same spot be
+  // re-tapped and still register as a new command.
+  moveTarget: { x: number; z: number; nonce: number } | null;
+  setMoveTarget: (x: number, z: number) => void;
+  clearMoveTarget: () => void;
+
   // Which overlay panel is open (null = none / in-world).
   activePanel: string | null;
   openPanel: (id: string) => void;
   closePanel: () => void;
 
-  // Perf: pause render-heavy work + input while a full-screen panel is open.
+  // True while a full-screen panel (dialogue/project) is open. Blocks WASD/
+  // Space movement (Experience swaps in an empty keyboard map) and proximity
+  // re-detection — it does NOT stop rendering or animation, which keep going
+  // behind the panel.
   isPaused: boolean;
 }
 
@@ -85,8 +94,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (get().nearbyInteractable !== id) set({ nearbyInteractable: id });
   },
 
+  moveTarget: null,
+  setMoveTarget: (x, z) =>
+    set((s) => ({ moveTarget: { x, z, nonce: (s.moveTarget?.nonce ?? 0) + 1 } })),
+  clearMoveTarget: () => {
+    if (get().moveTarget) set({ moveTarget: null });
+  },
+
   activePanel: null,
-  openPanel: (activePanel) => set({ activePanel, isPaused: true }),
+  // Opening a panel stops the render loop, so drop any walk order too —
+  // otherwise the player marches on the moment the panel closes.
+  openPanel: (activePanel) => set({ activePanel, isPaused: true, moveTarget: null }),
   closePanel: () => set({ activePanel: null, isPaused: false }),
 
   isPaused: false,

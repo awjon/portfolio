@@ -5,7 +5,7 @@ import { Interactable } from './Interactable';
 import { Label } from './Label';
 import { useGameStore } from '../state/useGameStore';
 import { KitModel, SafeModel } from '../world/Props';
-import { KIT_SCALE } from '../world/StationMap';
+import { PROP_SCALE } from '../world/HouseMap';
 
 interface ArcadeMachineProps {
   id: string;
@@ -45,16 +45,16 @@ export function ArcadeMachine({
   });
 
   return (
-    <Interactable id={id} kind="machine" position={position} radius={2.6} panelId={panelId} label="Play">
+    <Interactable id={id} kind="machine" position={position} radius={1.7} panelId={panelId} label="Play">
       <group rotation={[0, rotationY, 0]}>
         <SafeModel>
-          <KitModel url={url} scale={KIT_SCALE} animate={animate} />
+          <KitModel url={url} scale={PROP_SCALE} animate={animate} />
         </SafeModel>
       </group>
 
       {/* Glowing floor ring. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <ringGeometry args={[0.85, 1.05, 40]} />
+        <ringGeometry args={[0.6, 0.76, 40]} />
         <meshStandardMaterial
           ref={ringMat}
           color="#0a0a12"
@@ -67,7 +67,7 @@ export function ArcadeMachine({
       </mesh>
 
       {/* Floating project title. */}
-      <Label text={title} position={[0, 2.1, 0]} color={color} fontSize={0.26} />
+      <Label text={title} position={[0, 1.85, 0]} color={color} fontSize={0.22} />
     </Interactable>
   );
 }
