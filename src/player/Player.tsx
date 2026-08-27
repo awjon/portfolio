@@ -7,11 +7,40 @@ import { useGameStore } from '../state/useGameStore';
 import { SPAWN, CHAR_SCALE } from '../world/HouseMap';
 import { findPath } from '../world/NavGrid';
 import { isTouchDevice } from '../ui/useIsTouch';
+import { useRapier } from '@react-three/rapier';
 import type { RapierRigidBody } from '@react-three/rapier';
 
 const RUN_THRESHOLD = 3.8; // horizontal speed above which we play Sprint
 const AIR_WINDOW = 0.12; // sample window (s) for vertical displacement
 const AIR_DISP = 0.22; // net rise/drop within a window that counts as airborne
+
+// ── Planting the model on the ground ────────────────────────────────────────
+/**
+ * ecctrl is a FLOATING capsule: it never rests on the ground, it hovers over
+ * it on a spring. Its ground ray starts at `-capsuleHalfHeight` (0.35) below
+ * the body centre and the spring holds that ray's hit at `floatingDis`
+ * (capsuleRadius + floatHeight = 0.6), so the body centre settles ~0.95 above
+ * the floor — not the 0.65 (capsuleHalfHeight + capsuleRadius) that "capsule
+ * bottom touches the ground" would imply. Hanging the model at a fixed -0.65
+ * therefore left the character's feet ~0.22 in the air.
+ *
+ * A fixed offset can't fix this either, because the spring visibly sags under
+ * gravity by an amount proportional to the frame delta (it applies ONE impulse
+ * per rendered frame against gravity accumulated over that whole frame), so
+ * the true resting height drifts with frame rate. Instead we cast our own ray
+ * each frame and hang the model exactly at whatever it hits — feet land on the
+ * real surface, on the path, on a rug, or on the porch step, at any frame rate.
+ */
+const GROUND_RAY = 3; // how far down to look for a surface
+/**
+ * Ground further below the body centre than this means we're airborne rather
+ * than standing (comfortably clear of the ~0.87 resting distance plus sag).
+ */
+const STAND_MAX = 1.15;
+/** Airborne: hang the model off the capsule's bottom, the way a jump reads. */
+const AIR_OFFSET = -0.65;
+/** How fast the offset chases its target — high enough that standing is exact. */
+const PLANT_LAMBDA = 18;
 
 // ── Tap-to-move follower ────────────────────────────────────────────────────
 const WAYPOINT_REACHED = 0.45; // how close counts as "at this corner"
@@ -40,6 +69,12 @@ const TOUCH = isTouchDevice();
  */
 export function Player() {
   const bodyRef = useRef<RapierRigidBody>(null);
+  const modelRef = useRef<THREE.Group>(null);
+  const { world, rapier } = useRapier();
+  const groundRay = useMemo(
+    () => new rapier.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 }),
+    [rapier],
+  );
   const win = useRef({ t: 0, y: 0, air: 0 as 0 | 1 | -1 });
   const setMoveState = useGameStore((s) => s.setMoveState);
   const playerPos = useGameStore((s) => s.playerPos);
@@ -101,6 +136,26 @@ export function Player() {
     else setMoveState('run');
 
     playerPos.set(t.x, t.y, t.z);
+
+    // Plant the model's feet on whatever is actually underneath (see above).
+    const model = modelRef.current;
+    if (model) {
+      groundRay.origin.x = t.x;
+      groundRay.origin.y = t.y;
+      groundRay.origin.z = t.z;
+      const ground = world.castRay(
+        groundRay,
+        GROUND_RAY,
+        true,
+        rapier.QueryFilterFlags.EXCLUDE_SENSORS,
+        undefined,
+        undefined,
+        body,
+      );
+      const target =
+        ground && ground.timeOfImpact <= STAND_MAX ? -ground.timeOfImpact : AIR_OFFSET;
+      model.position.y += (target - model.position.y) * (1 - Math.exp(-PLANT_LAMBDA * delta));
+    }
 
     // ── Follow the tapped route ──────────────────────────────────────────
     const route = path.current;
@@ -178,9 +233,9 @@ export function Player() {
       moveImpulsePointY={0}
       position={SPAWN}
     >
-      {/* ecctrl's capsule rests with its centre 0.65 above the floor, so the
-          model hangs from there to put the character's feet on the ground. */}
-      <group position={[0, -0.65, 0]} scale={CHAR_SCALE}>
+      {/* The capsule hovers, so this offset is driven each frame from a ray
+          down to the real floor (see above) rather than being a constant. */}
+      <group ref={modelRef} position={[0, AIR_OFFSET, 0]} scale={CHAR_SCALE}>
         <Character />
       </group>
     </Ecctrl>

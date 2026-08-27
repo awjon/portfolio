@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore, type MoveState } from '../state/useGameStore';
@@ -23,34 +23,17 @@ const LOCOMOTION: Record<MoveState, string> = {
 };
 
 /**
- * 'walk' and 'sprint' each bake a vertical bounce into the root bone (0 → 0.05
- * local units for walk, 0 → 0.2 for sprint — a third of the character's own
- * height). ecctrl already drives vertical position from physics, entirely
- * independently of the mesh's animation, so this bounce doesn't move the
- * capsule at all — it just lifts the model off the ground every stride,
- * worst at a sprint, reading as the character hovering/floating while it runs.
- * ('sit'/'drive' use the same root-Y channel deliberately, to sink onto a
- * seat, so only these two locomotion clips get stripped.)
+ * The root bone's vertical channel is left exactly as authored. 'walk' and
+ * 'sprint' lift the body each stride to pair with the leg reaching down, so
+ * the planted foot stays at floor level; zeroing it (an earlier attempt at
+ * the "character floats" bug) only made the extended leg clip through the
+ * floor. That bug was really the capsule's hover height — the model hung at a
+ * fixed offset that assumed the capsule rests ON the ground when it actually
+ * floats above it, which Player now measures per frame with its own ray.
  */
-const DEBOUNCE_CLIPS = new Set(['walk', 'sprint']);
-
-function stripLocomotionBounce(clips: THREE.AnimationClip[]) {
-  for (const clip of clips) {
-    if (!DEBOUNCE_CLIPS.has(clip.name)) continue;
-    for (const track of clip.tracks) {
-      if (!track.name.endsWith('.position')) continue;
-      const values = track.values; // VectorKeyframeTrack: flat [x,y,z, x,y,z, ...]
-      for (let i = 1; i < values.length; i += 3) values[i] = 0;
-    }
-  }
-}
-
 export function Character() {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(MODEL, true);
-  // Mutates the cached clips once per load, before useAnimations binds them to
-  // the mixer — cheap and idempotent, so re-renders are harmless to repeat.
-  useMemo(() => stripLocomotionBounce(animations), [animations]);
   const { actions, mixer } = useAnimations(animations, group);
 
   const moveState = useGameStore((s) => s.moveState);
