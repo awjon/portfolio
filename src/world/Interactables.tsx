@@ -21,34 +21,35 @@ import { BACK_GROWTH, EAST_GROWTH, FRONT_GROWTH, WEST_GROWTH, tileToWorld } from
 const AR = '/models/arcade/';
 const NP = '/models/npc/';
 
-// ── Project kiosks — all six line the walls of the games den ────────────────
+// ── Project kiosks — all six line the walls of the games den (south, east
+//    and west — the north wall carries the study doorway, so it stays free) ─
 const MACHINES = [
-  { id: 'm-wiseframe', url: AR + 'arcade-machine.glb', tile: [6.85, 3.82], rot: 0, panelId: 'works-wiseframe', title: 'WISEFRAME', color: '#00b7d4' },
-  { id: 'm-rondevus', url: AR + 'pinball.glb', tile: [7.7, 3.95], rot: 0, panelId: 'works-rondevus', title: 'RONDEVUS', color: '#e01e63' },
-  { id: 'm-survival', url: AR + 'dance-machine.glb', tile: [10, 4.12], rot: 0, panelId: 'works-survival-sim', title: 'SURVIVAL SIM', color: '#8e24aa' },
-  { id: 'm-cleavercut', url: AR + 'claw-machine.glb', tile: [11.05, 4.0], rot: -Math.PI / 2, panelId: 'works-cleavercut', title: 'CLEAVERCUT', color: '#ef6c00', animate: true },
-  { id: 'm-playground', url: AR + 'basketball-game.glb', tile: [7.1, 5.85], rot: Math.PI, panelId: 'works-playground-finder', title: 'PLAYGROUND FINDER', color: '#2e7d32' },
-  { id: 'm-firebat', url: AR + 'air-hockey.glb', tile: [8.8, 6.05], rot: Math.PI, panelId: 'works-firebat', title: 'FIREBAT HOMELAB', color: '#d84315' },
+  { id: 'm-wiseframe', url: AR + 'arcade-machine.glb', tile: [8.2, 7.2], rot: Math.PI / 2, panelId: 'works-wiseframe', title: 'WISEFRAME', color: '#00b7d4' },
+  { id: 'm-rondevus', url: AR + 'pinball.glb', tile: [8.2, 9.8], rot: Math.PI / 2, panelId: 'works-rondevus', title: 'RONDEVUS', color: '#e01e63' },
+  { id: 'm-survival', url: AR + 'dance-machine.glb', tile: [12.3, 7.2], rot: -Math.PI / 2, panelId: 'works-survival-sim', title: 'SURVIVAL SIM', color: '#8e24aa' },
+  { id: 'm-cleavercut', url: AR + 'claw-machine.glb', tile: [12.3, 9.8], rot: -Math.PI / 2, panelId: 'works-cleavercut', title: 'CLEAVERCUT', color: '#ef6c00', animate: true },
+  { id: 'm-playground', url: AR + 'basketball-game.glb', tile: [9, 10.2], rot: Math.PI, panelId: 'works-playground-finder', title: 'PLAYGROUND FINDER', color: '#2e7d32' },
+  { id: 'm-firebat', url: AR + 'air-hockey.glb', tile: [11, 10.2], rot: Math.PI, panelId: 'works-firebat', title: 'FIREBAT HOMELAB', color: '#d84315' },
 ] as const;
 
 // ── The household — humans, indoors only ───────────────────────────────────
 const NPCS: (Omit<NpcProps, 'position'> & { tile: [number, number]; y?: number })[] = [
   // Hall
-  { id: 'host', model: NP + 'character-male-a.glb', tile: [4.35, 6.15], rotationY: 0.5, name: 'HOST' },
-  { id: 'visitor', model: NP + 'character-female-b.glb', tile: [5.3, 5.5], rotationY: -2.3, name: 'VISITOR', pose: 'holding-both' },
+  { id: 'host', model: NP + 'character-male-a.glb', tile: [6, 9.3], rotationY: 0.5, name: 'HOST' },
+  { id: 'visitor', model: NP + 'character-female-b.glb', tile: [6.5, 6.8], rotationY: -2.3, name: 'VISITOR', pose: 'holding-both' },
   // Kitchen / diner
-  { id: 'cook', model: NP + 'character-female-c.glb', tile: [5, 0.5], rotationY: Math.PI, name: 'COOK' },
-  { id: 'guest', model: NP + 'character-male-b.glb', tile: [2.95, 2.05], y: 0.26, rotationY: Math.PI, name: 'GUEST', pose: 'sit' },
+  { id: 'cook', model: NP + 'character-female-c.glb', tile: [3.3, 0.6], rotationY: Math.PI, name: 'COOK' },
+  { id: 'guest', model: NP + 'character-male-b.glb', tile: [8.85, 2.05], y: 0.26, rotationY: Math.PI, name: 'GUEST', pose: 'sit' },
   // Study
-  { id: 'analyst', model: NP + 'character-female-d.glb', tile: [8, 0.6], y: 0.28, rotationY: Math.PI, name: 'ANALYST', pose: 'sit' },
-  { id: 'reader', model: NP + 'character-male-e.glb', tile: [9.65, 2.5], rotationY: Math.PI / 2, name: 'READER' },
+  { id: 'analyst', model: NP + 'character-female-d.glb', tile: [9, 3.6], y: 0.28, rotationY: Math.PI, name: 'ANALYST', pose: 'sit' },
+  { id: 'reader', model: NP + 'character-male-e.glb', tile: [11.0, 4.9], rotationY: Math.PI / 2, name: 'READER' },
   // Living room
-  { id: 'lounger', model: NP + 'character-female-e.glb', tile: [1.55, 4.4], y: 0.24, rotationY: Math.PI, name: 'LOUNGER', pose: 'sit' },
-  { id: 'bookworm', model: NP + 'character-male-c.glb', tile: [2.42, 5.9], y: 0.3, rotationY: Math.PI / 2, name: 'BOOKWORM', pose: 'sit' },
-  { id: 'dj', model: NP + 'character-female-f.glb', tile: [2.3, 3.1], rotationY: 2.6, name: 'DJ' },
+  { id: 'lounger', model: NP + 'character-female-e.glb', tile: [1.5, 5.3], y: 0.24, rotationY: Math.PI, name: 'LOUNGER', pose: 'sit' },
+  { id: 'bookworm', model: NP + 'character-male-c.glb', tile: [2.7, 8.7], y: 0.3, rotationY: Math.PI / 2, name: 'BOOKWORM', pose: 'sit' },
+  { id: 'dj', model: NP + 'character-female-f.glb', tile: [2.3, 3.6], rotationY: 2.6, name: 'DJ' },
   // Games den
-  { id: 'gamer', model: AR + 'character-gamer.glb', tile: [7.75, 4.75], rotationY: Math.PI, name: 'GAMER' },
-  { id: 'challenger', model: AR + 'character-employee.glb', tile: [9.5, 4.95], rotationY: 0, name: 'CHALLENGER' },
+  { id: 'gamer', model: AR + 'character-gamer.glb', tile: [9, 8.7], rotationY: Math.PI, name: 'GAMER' },
+  { id: 'challenger', model: AR + 'character-employee.glb', tile: [11, 8.7], rotationY: 0, name: 'CHALLENGER' },
 ];
 
 // ── Animals — all fifteen live outdoors, in raw world coords ───────────────

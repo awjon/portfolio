@@ -33,6 +33,7 @@ import {
   DOOR_GAP,
   DOOR_TOP,
   PLAYER_CLEAR,
+  DOOR_COL,
   DOORS,
   HOUSE,
   FRONT_DOOR,
@@ -84,6 +85,8 @@ const zc = (r: number) => tileToWorld(0, r)[2];
 
 /** Exterior edges get a window on a fixed, repeatable rhythm. */
 function wantsWindow(c: number, r: number, side: Side): boolean {
+  // A classic face: a window flanking the front door on each side, dead centre.
+  if (r === ROWS && side === 'N' && (c === DOOR_COL - 1 || c === DOOR_COL + 1)) return true;
   return (c * 5 + r * 4 + (side === 'N' ? 0 : 2)) % 3 === 1;
 }
 

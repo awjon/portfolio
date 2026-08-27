@@ -148,8 +148,8 @@ const DETAILS: PropSpec[] = [
 const PAVING: { pos: [number, number, number]; size: [number, number] }[] = [
   { pos: [PATH_X, 0.008, (HOUSE.maxZ + PAVEMENT_Z) / 2], size: [2.2 * ARCH_SCALE, PAVEMENT_Z - HOUSE.maxZ + 0.6] },
   { pos: [0, 0.006, PAVEMENT_Z], size: [96, 1.8] },
-  { pos: [tileToWorld(2, 0)[0], 0.008, HOUSE.minZ - 1.3 * ARCH_SCALE], size: [2.2 * ARCH_SCALE, 2.6 * ARCH_SCALE] },
-  { pos: [HOUSE.maxX + 1.3 * ARCH_SCALE, 0.008, tileToWorld(0, 5)[2]], size: [2.6 * ARCH_SCALE, 2.2 * ARCH_SCALE] },
+  { pos: [PATH_X, 0.008, HOUSE.minZ - 1.3 * ARCH_SCALE], size: [2.2 * ARCH_SCALE, 2.6 * ARCH_SCALE] },
+  { pos: [HOUSE.maxX + 1.3 * ARCH_SCALE, 0.008, tileToWorld(0, 8)[2]], size: [2.6 * ARCH_SCALE, 2.2 * ARCH_SCALE] },
 ];
 
 /**

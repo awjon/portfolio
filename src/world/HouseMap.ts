@@ -17,6 +17,14 @@
  *          G games den (the project kiosks) · '.' outside
  *
  * North is -Z (up the plan), south is +Z, the front door is on the south porch.
+ *
+ * The plan is a plain, symmetric rectangle — no stepped edges, no one-cell
+ * alcoves. A straight hall runs the full depth of the house on the centre
+ * column (DOOR_COL): front door → hall → straight into the kitchen at the
+ * back, with the back door directly above it on the same axis. Living room
+ * is one big room filling the whole west wing; study and games den stack in
+ * the east wing. Every room is a solid rectangle, so every cell has room to
+ * turn around in — nothing dead-ends after a single tile.
  */
 
 // ── World-space constants ────────────────────────────────────────────────────
@@ -72,18 +80,25 @@ export const CHAR_SCALE = 1.75;
 export const ANIMAL_SCALE = 0.38;
 
 export const PLAN: string[] = [
-  '..KKKKKSSS..',
-  '.KKKKKKSSSS.',
-  'KKKKKKHSSSS.',
-  'LLLLLHHSSSS.',
-  'LLLLLHHGGGGG',
-  'LLLLHHHGGGGG',
-  'LLLLHHGGGGG.',
-  '....HH......',
+  'KKKKKKKKKKKKK',
+  'KKKKKKKKKKKKK',
+  'KKKKKKKKKKKKK',
+  'LLLLLHHHSSSSS',
+  'LLLLLHHHSSSSS',
+  'LLLLLHHHSSSSS',
+  'LLLLLHHHSSSSS',
+  'LLLLLHHHGGGGG',
+  'LLLLLHHHGGGGG',
+  'LLLLLHHHGGGGG',
+  'LLLLLHHHGGGGG',
 ];
 
 export const ROWS = PLAN.length;
 export const COLS = PLAN[0].length;
+
+/** The centre column the whole plan is built around: front door, hall and
+ *  back door all sit on this axis, which is what makes the plan symmetric. */
+export const DOOR_COL = (COLS - 1) / 2;
 
 export type Room = 'K' | 'S' | 'H' | 'L' | 'G';
 
@@ -129,22 +144,29 @@ export type EdgeKey = `${number},${number},${Side}`;
 
 export const edgeKey = (c: number, r: number, side: Side): EdgeKey => `${c},${r},${side}`;
 
-/** Hand-picked openings. Every room touches the hall, plus two shortcut loops. */
+/**
+ * Hand-picked openings. Every room touches the hall, plus three shortcut
+ * loops. Front door, back door and the hall↔kitchen doorway all share
+ * DOOR_COL, and the two side doors mirror each other on the same row — that
+ * shared axis is what reads as symmetric from both outside and in.
+ */
 export const DOORS = new Set<EdgeKey>([
-  edgeKey(5, 8, 'N'), //  front door — porch → hall
-  edgeKey(2, 0, 'N'), //  back door  — kitchen → back garden
-  edgeKey(12, 5, 'W'), // side door  — games den → east garden
-  edgeKey(6, 2, 'N'), //  hall ↔ kitchen
-  edgeKey(2, 3, 'N'), //  kitchen ↔ living room (loop)
-  edgeKey(5, 4, 'W'), //  hall ↔ living room
-  edgeKey(7, 3, 'W'), //  hall ↔ study
-  edgeKey(7, 5, 'W'), //  hall ↔ games den
-  edgeKey(9, 4, 'N'), //  study ↔ games den (loop)
+  edgeKey(DOOR_COL, ROWS, 'N'), //  front door — porch → hall
+  edgeKey(DOOR_COL, 0, 'N'), //     back door  — kitchen → back garden
+  edgeKey(COLS, 8, 'W'), //         side door  — games den → east garden
+  edgeKey(0, 8, 'W'), //            side door  — living room → west garden
+  edgeKey(DOOR_COL, 3, 'N'), //     hall ↔ kitchen (straight in)
+  edgeKey(2, 3, 'N'), //            kitchen ↔ living room (loop)
+  edgeKey(10, 3, 'N'), //           kitchen ↔ study (loop)
+  edgeKey(5, 6, 'W'), //            hall ↔ living room
+  edgeKey(8, 4, 'W'), //            hall ↔ study
+  edgeKey(8, 8, 'W'), //            hall ↔ games den
+  edgeKey(10, 7, 'N'), //           study ↔ games den (loop)
 ]);
 
 /** The front door's world position + the axis the garden path runs along. */
 export const FRONT_DOOR = {
-  x: tileToWorld(5, 0)[0],
+  x: tileToWorld(DOOR_COL, 0)[0],
   z: HOUSE.maxZ,
 } as const;
 
@@ -153,9 +175,9 @@ export const SPAWN: [number, number, number] = [FRONT_DOOR.x, 1.1, FRONT_DOOR.z 
 
 // ── Room reference points (used for lighting + prop authoring) ───────────────
 export const ROOM_CENTER: Record<Room, [number, number]> = {
-  K: [3.2, 1],
-  S: [8.5, 1.6],
-  H: [5.2, 5],
-  L: [2, 4.5],
-  G: [9, 5],
+  K: [6, 1],
+  S: [10, 4.5],
+  H: [6, 6.5],
+  L: [2, 6.5],
+  G: [10, 8.5],
 };
