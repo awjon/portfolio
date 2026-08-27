@@ -12,15 +12,27 @@
 import { useMemo } from 'react';
 import { InstancedKit, InstancedShapes, type KitTransform } from './InstancedKit';
 import { Props, SafeModel, type PropSpec } from './Props';
-import { FRONT_DOOR, HOUSE } from './HouseMap';
+import {
+  ARCH_SCALE,
+  BACK_GROWTH,
+  EAST_GROWTH,
+  FRONT_DOOR,
+  FRONT_GROWTH,
+  HOUSE,
+  WEST_GROWTH,
+  tileToWorld,
+} from './HouseMap';
 
 const C = '/models/city/';
 const R = '/models/road/';
 const F = '/models/furniture/';
 
 const ROAD_SCALE = 4;
-const ROAD_Z = 17;
-const PAVEMENT_Z = 14.2;
+// The whole front approach (wall → hedge gate → pavement → road) is one
+// nested chain; pushing the wall out by FRONT_GROWTH without the rest of the
+// chain crams the hedge gate onto the road (see buildHedge's z1).
+const ROAD_Z = 17 + FRONT_GROWTH;
+const PAVEMENT_Z = 14.2 + FRONT_GROWTH;
 const PATH_X = FRONT_DOOR.x;
 
 /** Road tiles are laid on a grid anchored to the path so the crossing lines up. */
@@ -38,10 +50,16 @@ function buildRoad(): { straights: KitTransform[]; lights: KitTransform[] } {
   return { straights, lights };
 }
 
-/** Low hedge round the property, with a gap where the front path crosses it. */
+/**
+ * Low hedge round the property, with a gap where the front path crosses it.
+ * z1 (the front row) tracks FRONT_GROWTH: it's how far the hedge sits from
+ * the wall, and that wall just moved — leaving z1 fixed would put the hedge's
+ * gate almost on top of the (now closer) porch, catching the player's spawn
+ * point in it.
+ */
 function buildHedge(): KitTransform[] {
   const out: KitTransform[] = [];
-  const x0 = -24, x1 = 24, z0 = -21, z1 = 12.6;
+  const x0 = -24, x1 = 24, z0 = -21, z1 = 12.6 + FRONT_GROWTH;
   const step = 1.6;
   const box = (x: number, z: number, sx: number, sz: number) =>
     out.push({ position: [x, 0.42, z], scale: [sx, 0.84, sz] });
@@ -58,13 +76,13 @@ function buildHedge(): KitTransform[] {
 
 /** [x, z, scale] — trunk + two canopy blobs are instanced from these. */
 const TREES: [number, number, number][] = [
-  // back garden
+  // back garden (the two nearest the old wall pushed out by BACK_GROWTH)
   [-16, -14, 1.15], [-9, -18, 0.95], [-1, -15, 1.25], [6, -18.5, 1.0], [14, -13.5, 1.1],
-  [-20, -8, 0.9], [19, -8.5, 1.05],
+  [-20, -8 + BACK_GROWTH, 0.9], [19, -8.5 + BACK_GROWTH, 1.05],
   // side gardens
   [-15, 1, 1.0], [-17.5, 8, 0.85], [15.5, -2, 0.95], [18, 7, 1.1],
-  // front garden + verge
-  [-8, 10, 0.8], [7, 10.5, 0.9],
+  // front garden + verge (pushed out by FRONT_GROWTH so canopies clear the roof)
+  [-8, 10 + FRONT_GROWTH, 0.8], [7, 10.5 + FRONT_GROWTH, 0.9],
   // across the street
   [-18, 21, 1.2], [10, 20.5, 1.05], [22, 22, 0.95],
 ];
@@ -83,10 +101,11 @@ function buildTrees() {
 }
 
 const BUILDINGS: PropSpec[] = [
-  // Neighbouring houses across the street, facing back this way.
+  // Neighbouring houses across the street, facing back this way. Z tracks the
+  // same front-approach chain as ROAD_Z/PAVEMENT_Z — they're the far edge of it.
   ...(['a', 'b', 'c', 'd', 'e', 'f'] as const).map((v, i) => ({
     url: `${C}building-${v}.glb`,
-    at: [-30 + i * 12, 24] as [number, number],
+    at: [-30 + i * 12, 24 + FRONT_GROWTH] as [number, number],
     rotationY: Math.PI,
     scale: 4,
     collider: true,
@@ -100,30 +119,37 @@ const BUILDINGS: PropSpec[] = [
 
 const DETAILS: PropSpec[] = [
   { url: R + 'road-crossing.glb', at: [PATH_X, ROAD_Z], offset: [0, 0.011, 0], scale: ROAD_SCALE },
-  // Front garden
-  { url: F + 'bench.glb', at: [4.5, 9], rotationY: Math.PI, scale: 2, collider: true },
-  { url: F + 'pottedPlant.glb', at: [PATH_X - 1.6, 6.6], scale: 1.8 },
-  { url: F + 'pottedPlant.glb', at: [PATH_X + 1.6, 6.6], scale: 1.8 },
-  // Back garden — where most of the animals hang out
-  { url: C + 'detail-parasol-a.glb', at: [-4, -10], scale: 5 },
-  { url: F + 'bench.glb', at: [-7.5, -9.4], rotationY: -Math.PI / 2, scale: 2, collider: true },
-  { url: F + 'bench.glb', at: [2, -11.5], rotationY: 0.4, scale: 2, collider: true },
-  { url: F + 'pottedPlant.glb', at: [-6.6, -6.9], scale: 1.6 },
-  { url: F + 'pottedPlant.glb', at: [-3.9, -6.9], scale: 1.6 },
-  // Side gardens
-  { url: C + 'detail-parasol-b.glb', at: [13, 3], scale: 5 },
-  { url: F + 'bench.glb', at: [11.5, 5.4], rotationY: -Math.PI / 2, scale: 2, collider: true },
-  { url: F + 'pottedPlant.glb', at: [10.6, 1.4], scale: 1.6 },
-  { url: F + 'pottedPlant.glb', at: [-11, -1], scale: 1.6 },
-  { url: F + 'pottedPlant.glb', at: [-11, 3.5], scale: 1.6 },
+  // Front garden — pushed out by FRONT_GROWTH, and the flanking pots' offset
+  // from the path widened to match the (now wider) porch canopy over them.
+  { url: F + 'bench.glb', at: [4.5, 9 + FRONT_GROWTH], rotationY: Math.PI, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [PATH_X - 1.6 * ARCH_SCALE, 6.6 + FRONT_GROWTH], scale: 1.8 },
+  { url: F + 'pottedPlant.glb', at: [PATH_X + 1.6 * ARCH_SCALE, 6.6 + FRONT_GROWTH], scale: 1.8 },
+  // Back garden — where most of the animals hang out — pushed out by BACK_GROWTH
+  { url: C + 'detail-parasol-a.glb', at: [-4, -10 + BACK_GROWTH], scale: 5 },
+  { url: F + 'bench.glb', at: [-7.5, -9.4 + BACK_GROWTH], rotationY: -Math.PI / 2, scale: 2, collider: true },
+  { url: F + 'bench.glb', at: [2, -11.5 + BACK_GROWTH], rotationY: 0.4, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [-6.6, -6.9 + BACK_GROWTH], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-3.9, -6.9 + BACK_GROWTH], scale: 1.6 },
+  // Side gardens — pushed out by EAST_GROWTH / WEST_GROWTH
+  { url: C + 'detail-parasol-b.glb', at: [13 + EAST_GROWTH, 3], scale: 5 },
+  { url: F + 'bench.glb', at: [11.5 + EAST_GROWTH, 5.4], rotationY: -Math.PI / 2, scale: 2, collider: true },
+  { url: F + 'pottedPlant.glb', at: [10.6 + EAST_GROWTH, 1.4], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-11 + WEST_GROWTH, -1], scale: 1.6 },
+  { url: F + 'pottedPlant.glb', at: [-11 + WEST_GROWTH, 3.5], scale: 1.6 },
 ];
 
-/** Paving: the front path, plus small pads at the back and side doors. */
+/**
+ * Paving: the front path, plus small pads at the back and side doors. The
+ * back/side pads are centred on those doors' own edge position (via
+ * tileToWorld) so they track the door exactly regardless of TILE/ARCH_SCALE;
+ * their offset-from-the-door and size are scaled by ARCH_SCALE to match the
+ * now-wider doors.
+ */
 const PAVING: { pos: [number, number, number]; size: [number, number] }[] = [
-  { pos: [PATH_X, 0.008, (HOUSE.maxZ + PAVEMENT_Z) / 2], size: [2.2, PAVEMENT_Z - HOUSE.maxZ + 0.6] },
+  { pos: [PATH_X, 0.008, (HOUSE.maxZ + PAVEMENT_Z) / 2], size: [2.2 * ARCH_SCALE, PAVEMENT_Z - HOUSE.maxZ + 0.6] },
   { pos: [0, 0.006, PAVEMENT_Z], size: [96, 1.8] },
-  { pos: [-5.25, 0.008, HOUSE.minZ - 1.3], size: [2.2, 2.6] },
-  { pos: [HOUSE.maxX + 1.3, 0.008, 2.25], size: [2.6, 2.2] },
+  { pos: [tileToWorld(2, 0)[0], 0.008, HOUSE.minZ - 1.3 * ARCH_SCALE], size: [2.2 * ARCH_SCALE, 2.6 * ARCH_SCALE] },
+  { pos: [HOUSE.maxX + 1.3 * ARCH_SCALE, 0.008, tileToWorld(0, 5)[2]], size: [2.6 * ARCH_SCALE, 2.2 * ARCH_SCALE] },
 ];
 
 /**

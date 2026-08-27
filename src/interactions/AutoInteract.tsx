@@ -22,8 +22,9 @@ const STILL_EPSILON = 0.06;
  *    object's radius, so closing a panel while still standing there doesn't
  *    immediately reopen it.
  *
- * Runs on a timer rather than in the render loop, because the render loop is
- * stopped while a panel is open.
+ * Runs on its own timer rather than the R3F render loop — it needs to keep
+ * ticking (checking `activePanel`) even before this component's first render
+ * cycle after a panel closes, and doesn't need per-frame precision anyway.
  */
 export function AutoInteract({ enabled }: { enabled: boolean }) {
   useEffect(() => {

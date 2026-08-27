@@ -13,13 +13,13 @@
  */
 
 import { Props, type PropSpec } from './Props';
-import { KIT_SCALE } from './HouseMap';
+import { FURNITURE_SCALE } from './HouseMap';
 
 const F = '/models/furniture/';
 const AR = '/models/arcade/';
 
 /** Lifts a table-top item onto its surface (world units). */
-const on = (h: number): [number, number, number] => [0, h * KIT_SCALE, 0];
+const on = (h: number): [number, number, number] => [0, h * FURNITURE_SCALE, 0];
 
 const ITEMS: PropSpec[] = [
   // ── Kitchen / diner ───────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ const ITEMS: PropSpec[] = [
   { url: F + 'laptop.glb', tile: [9.1, -0.22], offset: on(0.34) },
   { url: F + 'bookcaseClosedWide.glb', tile: [10.2, 1.3], rotationY: -Math.PI / 2, collider: true },
   { url: F + 'bookcaseOpen.glb', tile: [10.2, 2.5], rotationY: -Math.PI / 2, collider: true },
-  { url: F + 'books.glb', tile: [10.2, 2.5], offset: [-0.1, 0.62 * KIT_SCALE, 0], rotationY: -Math.PI / 2 },
+  { url: F + 'books.glb', tile: [10.2, 2.5], offset: [-0.1, 0.62 * FURNITURE_SCALE, 0], rotationY: -Math.PI / 2 },
   { url: F + 'sideTable.glb', tile: [7.3, 2.6], rotationY: Math.PI / 2 },
   { url: F + 'lampSquareTable.glb', tile: [7.3, 2.6], offset: on(0.39) },
   { url: F + 'rugSquare.glb', tile: [8.8, 1.9] },

@@ -8,7 +8,7 @@
  *  - floors   floorFull.glb per cell, tinted per room so the rooms read apart
  *  - walls    wall.glb on every boundary edge
  *  - doors    wallDoorwayWide.glb on the edges listed in HouseMap.DOORS
- *             (a 1.3-unit-wide opening — comfortably walk-through), plus a
+ *             (roughly 86% of a tile wide — comfortably walk-through), plus a
  *             swung-open door leaf at the front step
  *  - windows  wallWindow.glb sprinkled along the exterior edges
  *  - roof     a procedural eaves band + chimney, so the place reads as a
@@ -22,6 +22,7 @@ import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import { InstancedKit, InstancedShapes, type KitTransform } from './InstancedKit';
 import { SafeModel } from './Props';
 import {
+  ARCH_SCALE,
   COLS,
   ROWS,
   TILE,
@@ -56,8 +57,13 @@ const FLOOR_TINT: Record<Room, string> = {
 const ROOF_COLOR = '#a8574a';
 /** The kit's plaster is a cool grey; a warm tint reads as a home, not an office. */
 const WALL_TINT = '#fff0dd';
-const EAVE_H = 0.18;
-const EAVE_OUT = 0.62; // how far the roof oversails the wall
+/**
+ * Roof/chimney/porch dimensions are hand-authored absolutes (not derived from
+ * a GLB), so unlike the wall/door/window kit pieces they don't grow for free
+ * when ARCH_SCALE changes — each is scaled by it explicitly below.
+ */
+const EAVE_H = 0.18 * ARCH_SCALE;
+const EAVE_OUT = 0.62 * ARCH_SCALE; // how far the roof oversails the wall
 
 interface Collider {
   position: [number, number, number];
@@ -244,23 +250,23 @@ export function HouseShell() {
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
       </InstancedShapes>
-      <mesh position={[HOUSE.minX + 0.05, WALL_HEIGHT + 0.75, 0.75]} castShadow>
-        <boxGeometry args={[0.75, 1.5, 0.85]} />
+      <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 0.75 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
+        <boxGeometry args={[0.75 * ARCH_SCALE, 1.5 * ARCH_SCALE, 0.85 * ARCH_SCALE]} />
         <meshStandardMaterial color="#9c6a55" roughness={0.9} />
       </mesh>
-      <mesh position={[HOUSE.minX + 0.05, WALL_HEIGHT + 1.55, 0.75]} castShadow>
-        <boxGeometry args={[0.95, 0.18, 1.05]} />
+      <mesh position={[HOUSE.minX + 0.05 * ARCH_SCALE, WALL_HEIGHT + 1.55 * ARCH_SCALE, 0.75 * ARCH_SCALE]} castShadow>
+        <boxGeometry args={[0.95 * ARCH_SCALE, 0.18 * ARCH_SCALE, 1.05 * ARCH_SCALE]} />
         <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
       </mesh>
 
       {/* Porch: a canopy over the front step on two posts. */}
-      <mesh position={[FRONT_DOOR.x, WALL_HEIGHT + EAVE_H / 2, FRONT_DOOR.z + 0.75]} castShadow>
-        <boxGeometry args={[3, EAVE_H, 1.7]} />
+      <mesh position={[FRONT_DOOR.x, WALL_HEIGHT + EAVE_H / 2, FRONT_DOOR.z + 0.75 * ARCH_SCALE]} castShadow>
+        <boxGeometry args={[3 * ARCH_SCALE, EAVE_H, 1.7 * ARCH_SCALE]} />
         <meshStandardMaterial color={ROOF_COLOR} roughness={0.85} />
       </mesh>
-      {[-1.25, 1.25].map((dx) => (
-        <mesh key={dx} position={[FRONT_DOOR.x + dx, WALL_HEIGHT / 2, FRONT_DOOR.z + 1.35]} castShadow>
-          <boxGeometry args={[0.15, WALL_HEIGHT, 0.15]} />
+      {[-1.25 * ARCH_SCALE, 1.25 * ARCH_SCALE].map((dx) => (
+        <mesh key={dx} position={[FRONT_DOOR.x + dx, WALL_HEIGHT / 2, FRONT_DOOR.z + 1.35 * ARCH_SCALE]} castShadow>
+          <boxGeometry args={[0.15 * ARCH_SCALE, WALL_HEIGHT, 0.15 * ARCH_SCALE]} />
           <meshStandardMaterial color="#e8e2d6" roughness={0.9} />
         </mesh>
       ))}
@@ -271,7 +277,7 @@ export function HouseShell() {
           url={F + 'doorwayFront.glb'}
           transforms={[
             {
-              position: [FRONT_DOOR.x - TILE * 0.42, 0, FRONT_DOOR.z - 0.1],
+              position: [FRONT_DOOR.x - TILE * 0.42, 0, FRONT_DOOR.z - 0.1 * ARCH_SCALE],
               rotationY: -Math.PI / 2.3,
               scale: KIT_SCALE,
             },

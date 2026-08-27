@@ -55,7 +55,10 @@ interface GameState {
   openPanel: (id: string) => void;
   closePanel: () => void;
 
-  // Perf: pause render-heavy work + input while a full-screen panel is open.
+  // True while a full-screen panel (dialogue/project) is open. Blocks WASD/
+  // Space movement (Experience swaps in an empty keyboard map) and proximity
+  // re-detection — it does NOT stop rendering or animation, which keep going
+  // behind the panel.
   isPaused: boolean;
 }
 

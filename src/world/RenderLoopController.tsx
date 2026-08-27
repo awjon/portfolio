@@ -1,34 +1,48 @@
 import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { useGameStore } from '../state/useGameStore';
 
 /**
- * Battery/perf saver. R3F's default loop renders every frame forever. We stop
- * it in two cases:
- *   1. The browser tab is hidden (user switched away).
- *   2. A full-screen panel is open (isPaused) — the 3D view is covered anyway.
+ * Every useFrame subscriber this frame — ecctrl's floating-capsule spring,
+ * Rapier's own Physics stepper, ours — is handed the SAME raw delta from
+ * R3F's clock. Rapier substeps its own gravity/contacts at a fixed 1/60
+ * regardless of delta, so a hitch just costs it more substeps, safely. But
+ * ecctrl samples the ground once per JS frame (one raycast, one floating-
+ * spring force) and hands Rapier a velocity to hold for the WHOLE frame — on
+ * a real hitch that "frame" can cover up to half a simulated second, so one
+ * slightly-off raycast (a GC pause, a texture upload, a tab coming back from
+ * the background) gets carried across dozens of substeps instead of one,
+ * turning a normally invisible error into a visible fling or tumble. Capping
+ * the delta at its source, before ANY subscriber sees it, bounds how much
+ * simulated time a single bad sample can be stretched over — a hitch then
+ * costs a brief slowdown instead of a catch-up jump.
+ */
+const MAX_DELTA = 1 / 20; // never let one frame represent more than ~50ms
+
+/**
+ * Battery/perf saver: R3F's default loop renders every frame forever, but
+ * there's nothing to show while the browser tab is hidden, so we stop it then
+ * and resume on return.
  *
- * We toggle the internal frameloop via the R3F `invalidate`/`setFrameloop`
- * mechanism. When active we run 'always' (physics needs continuous ticks);
- * when paused we switch to 'never' so the GPU idles.
+ * A full-screen panel being open does NOT stop this any more — NPCs, arcade
+ * cabinets and the player's own idle animation should keep animating behind
+ * the dialogue/project panel, rather than freezing on whatever frame happened
+ * to be showing when it opened. Movement input is blocked separately (see
+ * Experience.tsx's keyboard map swap), not by stopping the render loop.
  */
 export function RenderLoopController() {
   const setFrameloop = useThree((s) => s.setFrameloop);
-  const isPaused = useGameStore((s) => s.isPaused);
+  const clock = useThree((s) => s.clock);
 
-  // Pause when a panel is open.
   useEffect(() => {
-    setFrameloop(isPaused ? 'never' : 'always');
-  }, [isPaused, setFrameloop]);
+    const anyClock = clock as unknown as { __deltaClamped?: boolean };
+    if (anyClock.__deltaClamped) return;
+    anyClock.__deltaClamped = true;
+    const rawGetDelta = clock.getDelta.bind(clock);
+    clock.getDelta = () => Math.min(rawGetDelta(), MAX_DELTA);
+  }, [clock]);
 
-  // Pause when the tab loses visibility; resume on return (unless a panel is
-  // still open).
   useEffect(() => {
-    const onVisibility = () => {
-      const paused = useGameStore.getState().isPaused;
-      if (document.hidden) setFrameloop('never');
-      else setFrameloop(paused ? 'never' : 'always');
-    };
+    const onVisibility = () => setFrameloop(document.hidden ? 'never' : 'always');
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [setFrameloop]);

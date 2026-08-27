@@ -20,6 +20,7 @@ import { Interactables } from './Interactables';
 import { ProximityDetector } from '../interactions/ProximityDetector';
 import { RenderLoopController } from './RenderLoopController';
 import { TapToMove } from './TapToMove';
+import { useGameStore } from '../state/useGameStore';
 
 // ecctrl reads these key names via drei's KeyboardControls.
 const keyboardMap = [
@@ -31,6 +32,14 @@ const keyboardMap = [
   { name: 'run', keys: ['Shift'] },
   { name: 'action1', keys: ['KeyE'] }, // interact (M2)
 ];
+/**
+ * Same action names, no keys bound to any of them — swapped in while a panel
+ * is open so WASD/Space/Shift stop steering the character. drei's
+ * KeyboardControls derives its store from the `map` prop, so this is a plain,
+ * reactive prop swap: no event-listener races, and it needs no cooperation
+ * from ecctrl (which just reads "nothing is pressed").
+ */
+const FROZEN_KEYBOARD_MAP = keyboardMap.map((m) => ({ ...m, keys: [] as string[] }));
 
 /**
  * A phone held upright has a very narrow horizontal view at a fixed vertical
@@ -90,8 +99,11 @@ const DEBUG_CAM = (() => {
 const SUN: [number, number, number] = [22, 21, 27];
 
 export function Experience() {
+  // A dialogue/project panel blocks WASD/Space, but the world keeps animating
+  // (see RenderLoopController) — only movement input is gated.
+  const isPaused = useGameStore((s) => s.isPaused);
   return (
-    <KeyboardControls map={keyboardMap}>
+    <KeyboardControls map={isPaused ? FROZEN_KEYBOARD_MAP : keyboardMap}>
       <Canvas
         shadows
         camera={{ fov: 55, position: [0, 5, 10] }}

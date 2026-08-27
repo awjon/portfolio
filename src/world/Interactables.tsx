@@ -16,7 +16,7 @@
 import { ArcadeMachine } from '../interactions/ArcadeMachine';
 import { Npc, type NpcProps } from '../interactions/Npc';
 import { Animal, type AnimalProps } from '../interactions/Animal';
-import { tileToWorld } from './HouseMap';
+import { BACK_GROWTH, EAST_GROWTH, FRONT_GROWTH, WEST_GROWTH, tileToWorld } from './HouseMap';
 
 const AR = '/models/arcade/';
 const NP = '/models/npc/';
@@ -52,26 +52,28 @@ const NPCS: (Omit<NpcProps, 'position'> & { tile: [number, number]; y?: number }
 ];
 
 // ── Animals — all fifteen live outdoors, in raw world coords ───────────────
+// Positions near the house add the matching *_GROWTH delta (see HouseMap) so
+// they stay outside the walls now that the architecture is 1.5x bigger.
 const ANIMALS: (Omit<AnimalProps, 'position'> & { at: [number, number] })[] = [
   // Front garden, either side of the path
-  { species: 'dog', at: [3.5, 9], rotationY: -2.4, ambient: 'idle' },
-  { species: 'cat', at: [-4.5, 8.4], rotationY: 0.9, ambient: 'idle' },
-  { species: 'bunny', at: [-7.2, 11.5], rotationY: 2.2, ambient: 'eat', size: 0.85 },
-  { species: 'chick', at: [2, 12], rotationY: -0.7, ambient: 'eat', size: 0.7 },
+  { species: 'dog', at: [3.5, 9 + FRONT_GROWTH], rotationY: -2.4, ambient: 'idle' },
+  { species: 'cat', at: [-4.5, 8.4 + FRONT_GROWTH], rotationY: 0.9, ambient: 'idle' },
+  { species: 'bunny', at: [-7.2, 11.5 + FRONT_GROWTH], rotationY: 2.2, ambient: 'eat', size: 0.85 },
+  { species: 'chick', at: [2, 12 + FRONT_GROWTH], rotationY: -0.7, ambient: 'eat', size: 0.7 },
   // Back garden
-  { species: 'deer', at: [-6, -12], rotationY: 0.9, ambient: 'eat', size: 1.25 },
-  { species: 'fox', at: [4, -9.5], rotationY: -1.8, ambient: 'idle', size: 1.1 },
-  { species: 'panda', at: [-12.5, -9], rotationY: 0.3, ambient: 'eat', size: 1.1 },
-  { species: 'caterpillar', at: [1.2, -7.6], rotationY: 2.6, ambient: 'eat', size: 0.7 },
-  { species: 'parrot', at: [8.5, -14], rotationY: -2.4, ambient: 'idle', size: 0.8 },
-  { species: 'monkey', at: [-15, -16], rotationY: -0.4, ambient: 'dance', size: 0.95 },
+  { species: 'deer', at: [-6, -12 + BACK_GROWTH], rotationY: 0.9, ambient: 'eat', size: 1.25 },
+  { species: 'fox', at: [4, -9.5 + BACK_GROWTH], rotationY: -1.8, ambient: 'idle', size: 1.1 },
+  { species: 'panda', at: [-12.5, -9 + BACK_GROWTH], rotationY: 0.3, ambient: 'eat', size: 1.1 },
+  { species: 'caterpillar', at: [1.2, -7.6 + BACK_GROWTH], rotationY: 2.6, ambient: 'eat', size: 0.7 },
+  { species: 'parrot', at: [8.5, -14 + BACK_GROWTH], rotationY: -2.4, ambient: 'idle', size: 0.8 },
+  { species: 'monkey', at: [-15, -16 + BACK_GROWTH], rotationY: -0.4, ambient: 'dance', size: 0.95 },
   // West side garden
-  { species: 'giraffe', at: [-14, 2], rotationY: 1.2, ambient: 'eat', size: 1.5 },
-  { species: 'tiger', at: [-13.5, 8], rotationY: 0.5, ambient: 'idle', size: 1.15 },
+  { species: 'giraffe', at: [-14 + WEST_GROWTH, 2], rotationY: 1.2, ambient: 'eat', size: 1.5 },
+  { species: 'tiger', at: [-13.5 + WEST_GROWTH, 8], rotationY: 0.5, ambient: 'idle', size: 1.15 },
   // East side garden
-  { species: 'bee', at: [12.5, -4], rotationY: -1.1, ambient: 'idle', size: 0.6 },
-  { species: 'penguin', at: [13, 6.5], rotationY: 0.4, ambient: 'idle', size: 0.9 },
-  { species: 'crab', at: [16, 10.5], rotationY: 1.5, ambient: 'idle', size: 0.8 },
+  { species: 'bee', at: [12.5 + EAST_GROWTH, -4], rotationY: -1.1, ambient: 'idle', size: 0.6 },
+  { species: 'penguin', at: [13 + EAST_GROWTH, 6.5], rotationY: 0.4, ambient: 'idle', size: 0.9 },
+  { species: 'crab', at: [16 + EAST_GROWTH, 10.5], rotationY: 1.5, ambient: 'idle', size: 0.8 },
 ];
 
 export function Interactables() {
