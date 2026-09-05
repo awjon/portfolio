@@ -1,0 +1,891 @@
+{
+  "furniture": [
+    {
+      "id": "f01",
+      "url": "/models/furniture/kitchenCabinetDrawer.glb",
+      "tile": [
+        1.3,
+        -0.26
+      ],
+      "collider": true
+    },
+    {
+      "id": "f02",
+      "url": "/models/furniture/kitchenSink.glb",
+      "tile": [
+        2.3,
+        -0.26
+      ],
+      "collider": true
+    },
+    {
+      "id": "f03",
+      "url": "/models/furniture/kitchenStove.glb",
+      "tile": [
+        3.3,
+        -0.26
+      ],
+      "collider": true
+    },
+    {
+      "id": "f04",
+      "url": "/models/furniture/kitchenFridge.glb",
+      "tile": [
+        4.3,
+        -0.3
+      ],
+      "collider": true
+    },
+    {
+      "id": "f05",
+      "url": "/models/furniture/hoodModern.glb",
+      "tile": [
+        3.3,
+        -0.26
+      ],
+      "offset": [
+        0,
+        1.4249999999999998,
+        0
+      ]
+    },
+    {
+      "id": "f06",
+      "url": "/models/furniture/kitchenCabinetUpper.glb",
+      "tile": [
+        1.3,
+        -0.3
+      ],
+      "offset": [
+        0,
+        1.4249999999999998,
+        0
+      ]
+    },
+    {
+      "id": "f07",
+      "url": "/models/furniture/kitchenMicrowave.glb",
+      "tile": [
+        1.3,
+        -0.26
+      ],
+      "offset": [
+        0,
+        0.6900000000000001,
+        0
+      ]
+    },
+    {
+      "id": "f08",
+      "url": "/models/furniture/kitchenCoffeeMachine.glb",
+      "tile": [
+        1.8,
+        -0.26
+      ],
+      "offset": [
+        0,
+        0.6900000000000001,
+        0
+      ]
+    },
+    {
+      "id": "f09",
+      "url": "/models/furniture/toaster.glb",
+      "tile": [
+        2.3,
+        -0.26
+      ],
+      "offset": [
+        0,
+        0.6900000000000001,
+        0
+      ]
+    },
+    {
+      "id": "f10",
+      "url": "/models/furniture/tableCloth.glb",
+      "tile": [
+        8.5,
+        1.6
+      ],
+      "collider": true
+    },
+    {
+      "id": "f11",
+      "url": "/models/furniture/chairCushion.glb",
+      "tile": [
+        8.15,
+        1.15
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "f12",
+      "url": "/models/furniture/chairCushion.glb",
+      "tile": [
+        8.85,
+        1.15
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "f13",
+      "url": "/models/furniture/chairCushion.glb",
+      "tile": [
+        8.15,
+        2.05
+      ],
+      "rotationY": 3.141592653589793
+    },
+    {
+      "id": "f14",
+      "url": "/models/furniture/chairCushion.glb",
+      "tile": [
+        8.85,
+        2.05
+      ],
+      "rotationY": 3.141592653589793
+    },
+    {
+      "id": "f15",
+      "url": "/models/furniture/plantSmall2.glb",
+      "tile": [
+        8.5,
+        1.6
+      ],
+      "offset": [
+        0,
+        0.51,
+        0
+      ]
+    },
+    {
+      "id": "f16",
+      "url": "/models/furniture/rugRounded.glb",
+      "tile": [
+        8.5,
+        1.85
+      ]
+    },
+    {
+      "id": "f17",
+      "url": "/models/furniture/trashcan.glb",
+      "tile": [
+        4.6,
+        2.2
+      ]
+    },
+    {
+      "id": "f18",
+      "url": "/models/furniture/rugRectangle.glb",
+      "tile": [
+        2.7,
+        1.4
+      ]
+    },
+    {
+      "id": "f19",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        0.35,
+        2.3
+      ]
+    },
+    {
+      "id": "f20",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        12.3,
+        2.3
+      ]
+    },
+    {
+      "id": "f21",
+      "url": "/models/furniture/desk.glb",
+      "tile": [
+        9,
+        2.8
+      ],
+      "collider": true
+    },
+    {
+      "id": "f22",
+      "url": "/models/furniture/computerScreen.glb",
+      "tile": [
+        9,
+        2.8
+      ],
+      "offset": [
+        0,
+        0.585,
+        0
+      ]
+    },
+    {
+      "id": "f23",
+      "url": "/models/furniture/computerKeyboard.glb",
+      "tile": [
+        9,
+        3.05
+      ],
+      "offset": [
+        0,
+        0.585,
+        0
+      ]
+    },
+    {
+      "id": "f24",
+      "url": "/models/furniture/chairDesk.glb",
+      "tile": [
+        9,
+        3.6
+      ],
+      "rotationY": 3.141592653589793
+    },
+    {
+      "id": "f25",
+      "url": "/models/furniture/table.glb",
+      "tile": [
+        11,
+        2.8
+      ],
+      "collider": true
+    },
+    {
+      "id": "f26",
+      "url": "/models/furniture/laptop.glb",
+      "tile": [
+        11,
+        2.8
+      ],
+      "offset": [
+        0,
+        0.51,
+        0
+      ]
+    },
+    {
+      "id": "f27",
+      "url": "/models/furniture/bookcaseClosedWide.glb",
+      "tile": [
+        11.7,
+        4.3
+      ],
+      "rotationY": -1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f28",
+      "url": "/models/furniture/bookcaseOpen.glb",
+      "tile": [
+        11.7,
+        5.6
+      ],
+      "rotationY": -1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f29",
+      "url": "/models/furniture/books.glb",
+      "tile": [
+        11.7,
+        5.6
+      ],
+      "offset": [
+        -0.1,
+        0.9299999999999999,
+        0
+      ],
+      "rotationY": -1.5707963267948966
+    },
+    {
+      "id": "f30",
+      "url": "/models/furniture/sideTable.glb",
+      "tile": [
+        8.3,
+        5.7
+      ],
+      "rotationY": 1.5707963267948966
+    },
+    {
+      "id": "f31",
+      "url": "/models/furniture/lampSquareTable.glb",
+      "tile": [
+        8.3,
+        5.7
+      ],
+      "offset": [
+        0,
+        0.585,
+        0
+      ]
+    },
+    {
+      "id": "f32",
+      "url": "/models/furniture/rugSquare.glb",
+      "tile": [
+        9.8,
+        4.7
+      ]
+    },
+    {
+      "id": "f33",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        9.5,
+        6.2
+      ]
+    },
+    {
+      "id": "f34",
+      "url": "/models/furniture/cardboardBoxClosed.glb",
+      "tile": [
+        8.3,
+        3.3
+      ],
+      "rotationY": 0.4
+    },
+    {
+      "id": "f35",
+      "url": "/models/furniture/rugDoormat.glb",
+      "tile": [
+        6,
+        10.4
+      ]
+    },
+    {
+      "id": "f36",
+      "url": "/models/furniture/rugRectangle.glb",
+      "tile": [
+        6,
+        7.5
+      ]
+    },
+    {
+      "id": "f37",
+      "url": "/models/furniture/coatRackStanding.glb",
+      "tile": [
+        5.3,
+        9.7
+      ]
+    },
+    {
+      "id": "f38",
+      "url": "/models/furniture/sideTableDrawers.glb",
+      "tile": [
+        6.7,
+        9.6
+      ],
+      "rotationY": -1.5707963267948966
+    },
+    {
+      "id": "f39",
+      "url": "/models/furniture/lampSquareTable.glb",
+      "tile": [
+        6.7,
+        9.6
+      ],
+      "offset": [
+        0,
+        0.585,
+        0
+      ]
+    },
+    {
+      "id": "f40",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        6.7,
+        8.6
+      ]
+    },
+    {
+      "id": "f41",
+      "url": "/models/furniture/lampRoundFloor.glb",
+      "tile": [
+        5.3,
+        7.5
+      ]
+    },
+    {
+      "id": "f42",
+      "url": "/models/furniture/bookcaseClosed.glb",
+      "tile": [
+        6.7,
+        5.5
+      ],
+      "rotationY": -1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f43",
+      "url": "/models/furniture/plantSmall3.glb",
+      "tile": [
+        6.7,
+        5.5
+      ],
+      "offset": [
+        0,
+        1.35,
+        0
+      ],
+      "rotationY": -1.5707963267948966
+    },
+    {
+      "id": "f44",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        5.3,
+        4.7
+      ]
+    },
+    {
+      "id": "f45",
+      "url": "/models/furniture/cabinetTelevision.glb",
+      "tile": [
+        1.5,
+        3.3
+      ],
+      "collider": true
+    },
+    {
+      "id": "f46",
+      "url": "/models/furniture/televisionModern.glb",
+      "tile": [
+        1.5,
+        3.3
+      ],
+      "offset": [
+        0,
+        0.48,
+        0
+      ]
+    },
+    {
+      "id": "f47",
+      "url": "/models/furniture/speaker.glb",
+      "tile": [
+        0.5,
+        3.3
+      ]
+    },
+    {
+      "id": "f48",
+      "url": "/models/furniture/speakerSmall.glb",
+      "tile": [
+        2.3,
+        3.3
+      ]
+    },
+    {
+      "id": "f49",
+      "url": "/models/furniture/loungeDesignSofa.glb",
+      "tile": [
+        1.5,
+        5.5
+      ],
+      "rotationY": 3.141592653589793,
+      "collider": true
+    },
+    {
+      "id": "f50",
+      "url": "/models/furniture/pillowBlue.glb",
+      "tile": [
+        1,
+        5.45
+      ],
+      "offset": [
+        0,
+        0.28500000000000003,
+        0
+      ],
+      "rotationY": 3.141592653589793
+    },
+    {
+      "id": "f51",
+      "url": "/models/furniture/loungeChair.glb",
+      "tile": [
+        3.5,
+        4.8
+      ],
+      "rotationY": -1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f52",
+      "url": "/models/furniture/tableCoffee.glb",
+      "tile": [
+        1.5,
+        4.7
+      ],
+      "collider": true
+    },
+    {
+      "id": "f53",
+      "url": "/models/furniture/books.glb",
+      "tile": [
+        1.65,
+        4.7
+      ],
+      "offset": [
+        0,
+        0.36,
+        0
+      ],
+      "rotationY": 0.5
+    },
+    {
+      "id": "f54",
+      "url": "/models/furniture/rugRectangle.glb",
+      "tile": [
+        1.5,
+        5
+      ]
+    },
+    {
+      "id": "f55",
+      "url": "/models/furniture/lampRoundFloor.glb",
+      "tile": [
+        0.3,
+        4
+      ]
+    },
+    {
+      "id": "f56",
+      "url": "/models/furniture/bookcaseOpenLow.glb",
+      "tile": [
+        -0.22,
+        5.8
+      ],
+      "rotationY": 1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f57",
+      "url": "/models/furniture/radio.glb",
+      "tile": [
+        -0.22,
+        5.8
+      ],
+      "offset": [
+        0,
+        0.615,
+        0
+      ],
+      "rotationY": 1.5707963267948966
+    },
+    {
+      "id": "f58",
+      "url": "/models/furniture/loungeChairRelax.glb",
+      "tile": [
+        2.7,
+        8.7
+      ],
+      "rotationY": 1.5707963267948966
+    },
+    {
+      "id": "f59",
+      "url": "/models/furniture/sideTable.glb",
+      "tile": [
+        1.5,
+        8.7
+      ]
+    },
+    {
+      "id": "f60",
+      "url": "/models/furniture/lampSquareTable.glb",
+      "tile": [
+        1.5,
+        8.7
+      ],
+      "offset": [
+        0,
+        0.585,
+        0
+      ]
+    },
+    {
+      "id": "f61",
+      "url": "/models/furniture/rugRound.glb",
+      "tile": [
+        2.3,
+        8.7
+      ]
+    },
+    {
+      "id": "f62",
+      "url": "/models/furniture/pottedPlant.glb",
+      "tile": [
+        0.4,
+        9.2
+      ]
+    },
+    {
+      "id": "f63",
+      "url": "/models/furniture/bear.glb",
+      "tile": [
+        3.2,
+        7.8
+      ],
+      "rotationY": 0.6
+    },
+    {
+      "id": "f64",
+      "url": "/models/furniture/rugSquare.glb",
+      "tile": [
+        10,
+        8.5
+      ]
+    },
+    {
+      "id": "f65",
+      "url": "/models/furniture/benchCushion.glb",
+      "tile": [
+        10.5,
+        7.3
+      ],
+      "rotationY": 1.5707963267948966,
+      "collider": true
+    },
+    {
+      "id": "f66",
+      "url": "/models/furniture/stoolBar.glb",
+      "tile": [
+        9.2,
+        8.5
+      ]
+    },
+    {
+      "id": "f67",
+      "url": "/models/furniture/stoolBar.glb",
+      "tile": [
+        10.8,
+        8.9
+      ]
+    },
+    {
+      "id": "f68",
+      "url": "/models/furniture/speaker.glb",
+      "tile": [
+        8.3,
+        7.3
+      ]
+    },
+    {
+      "id": "f69",
+      "url": "/models/furniture/trashcan.glb",
+      "tile": [
+        11.7,
+        7.3
+      ]
+    },
+    {
+      "id": "f70",
+      "url": "/models/arcade/prizes.glb",
+      "tile": [
+        9,
+        9
+      ],
+      "rotationY": 1.5707963267948966,
+      "scale": 1.4,
+      "collider": true
+    }
+  ],
+  "npcs": [
+    {
+      "id": "host",
+      "model": "/models/npc/character-male-a.glb",
+      "tile": [
+        6,
+        9.3
+      ],
+      "rotationY": 0.5,
+      "name": "HOST"
+    },
+    {
+      "id": "visitor",
+      "model": "/models/npc/character-female-b.glb",
+      "tile": [
+        6.5,
+        6.8
+      ],
+      "rotationY": -2.3,
+      "name": "VISITOR",
+      "pose": "holding-both"
+    },
+    {
+      "id": "cook",
+      "model": "/models/npc/character-female-c.glb",
+      "tile": [
+        3.3,
+        0.6
+      ],
+      "rotationY": 3.141592653589793,
+      "name": "COOK"
+    },
+    {
+      "id": "guest",
+      "model": "/models/npc/character-male-b.glb",
+      "tile": [
+        8.85,
+        2.05
+      ],
+      "y": 0.26,
+      "rotationY": 3.141592653589793,
+      "name": "GUEST",
+      "pose": "sit"
+    },
+    {
+      "id": "analyst",
+      "model": "/models/npc/character-female-d.glb",
+      "tile": [
+        9,
+        3.6
+      ],
+      "y": 0.28,
+      "rotationY": 3.141592653589793,
+      "name": "ANALYST",
+      "pose": "sit"
+    },
+    {
+      "id": "reader",
+      "model": "/models/npc/character-male-e.glb",
+      "tile": [
+        11,
+        4.9
+      ],
+      "rotationY": 1.5707963267948966,
+      "name": "READER"
+    },
+    {
+      "id": "lounger",
+      "model": "/models/npc/character-female-e.glb",
+      "tile": [
+        1.5,
+        5.3
+      ],
+      "y": 0.24,
+      "rotationY": 3.141592653589793,
+      "name": "LOUNGER",
+      "pose": "sit"
+    },
+    {
+      "id": "bookworm",
+      "model": "/models/npc/character-male-c.glb",
+      "tile": [
+        2.7,
+        8.7
+      ],
+      "y": 0.3,
+      "rotationY": 1.5707963267948966,
+      "name": "BOOKWORM",
+      "pose": "sit"
+    },
+    {
+      "id": "dj",
+      "model": "/models/npc/character-female-f.glb",
+      "tile": [
+        2.3,
+        3.6
+      ],
+      "rotationY": 2.6,
+      "name": "DJ"
+    },
+    {
+      "id": "gamer",
+      "model": "/models/arcade/character-gamer.glb",
+      "tile": [
+        9,
+        8.7
+      ],
+      "rotationY": 3.141592653589793,
+      "name": "GAMER"
+    },
+    {
+      "id": "challenger",
+      "model": "/models/arcade/character-employee.glb",
+      "tile": [
+        11,
+        8.7
+      ],
+      "rotationY": 0,
+      "name": "CHALLENGER"
+    }
+  ],
+  "machines": [
+    {
+      "id": "m-wiseframe",
+      "url": "/models/arcade/arcade-machine.glb",
+      "tile": [
+        8.2,
+        7.2
+      ],
+      "rotationY": 1.5707963267948966,
+      "panelId": "works-wiseframe",
+      "title": "WISEFRAME",
+      "color": "#00b7d4"
+    },
+    {
+      "id": "m-rondevus",
+      "url": "/models/arcade/pinball.glb",
+      "tile": [
+        8.2,
+        9.8
+      ],
+      "rotationY": 1.5707963267948966,
+      "panelId": "works-rondevus",
+      "title": "RONDEVUS",
+      "color": "#e01e63"
+    },
+    {
+      "id": "m-survival",
+      "url": "/models/arcade/dance-machine.glb",
+      "tile": [
+        12.3,
+        7.2
+      ],
+      "rotationY": -1.5707963267948966,
+      "panelId": "works-survival-sim",
+      "title": "SURVIVAL SIM",
+      "color": "#8e24aa"
+    },
+    {
+      "id": "m-cleavercut",
+      "url": "/models/arcade/claw-machine.glb",
+      "tile": [
+        12.3,
+        9.8
+      ],
+      "rotationY": -1.5707963267948966,
+      "panelId": "works-cleavercut",
+      "title": "CLEAVERCUT",
+      "color": "#ef6c00",
+      "animate": true
+    },
+    {
+      "id": "m-playground",
+      "url": "/models/arcade/basketball-game.glb",
+      "tile": [
+        9,
+        10.2
+      ],
+      "rotationY": 3.141592653589793,
+      "panelId": "works-playground-finder",
+      "title": "PLAYGROUND FINDER",
+      "color": "#2e7d32"
+    },
+    {
+      "id": "m-firebat",
+      "url": "/models/arcade/air-hockey.glb",
+      "tile": [
+        11,
+        10.2
+      ],
+      "rotationY": 3.141592653589793,
+      "panelId": "works-firebat",
+      "title": "FIREBAT HOMELAB",
+      "color": "#d84315"
+    }
+  ]
+}

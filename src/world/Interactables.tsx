@@ -4,53 +4,24 @@
  * Everything the player can press E on:
  *
  *  - six arcade cabinets in the games den, one per project (panel ids match
- *    `project.billboard` in content/projects.ts). They are deliberately packed
- *    into one small room so the whole portfolio is a few steps apart.
- *  - the household: every human NPC lives INDOORS, one or two per room.
- *  - the animals: all fifteen live OUTDOORS, in the gardens and on the verge.
+ *    `project.billboard` in content/projects.ts). Their positions live in
+ *    src/content/placement.json, same as the household below.
+ *  - the household: every human NPC lives INDOORS, one or two per room —
+ *    also in placement.json.
+ *  - the animals: all fifteen live OUTDOORS, in the gardens and on the verge
+ *    (hardcoded here — Build Mode only covers what's inside the house).
  *
- * Indoor positions are map tiles (see HouseMap), outdoor ones are raw world
- * x/z via `at`. Facing: rotationY 0 = south, PI = north, ±PI/2 = east/west.
+ * Furniture/NPC/machine positions are edited visually in Build Mode (press B
+ * in a local dev server) instead of by hand — see src/editor. Indoor
+ * positions are map tiles (see HouseMap), outdoor animals use raw world x/z
+ * via `at`. Facing: rotationY 0 = south, PI = north, ±PI/2 = east/west.
  */
 
 import { ArcadeMachine } from '../interactions/ArcadeMachine';
-import { Npc, type NpcProps } from '../interactions/Npc';
+import { Npc } from '../interactions/Npc';
 import { Animal, type AnimalProps } from '../interactions/Animal';
 import { BACK_GROWTH, EAST_GROWTH, FRONT_GROWTH, WEST_GROWTH, tileToWorld } from './HouseMap';
-
-const AR = '/models/arcade/';
-const NP = '/models/npc/';
-
-// ── Project kiosks — all six line the walls of the games den (south, east
-//    and west — the north wall carries the study doorway, so it stays free) ─
-const MACHINES = [
-  { id: 'm-wiseframe', url: AR + 'arcade-machine.glb', tile: [8.2, 7.2], rot: Math.PI / 2, panelId: 'works-wiseframe', title: 'WISEFRAME', color: '#00b7d4' },
-  { id: 'm-rondevus', url: AR + 'pinball.glb', tile: [8.2, 9.8], rot: Math.PI / 2, panelId: 'works-rondevus', title: 'RONDEVUS', color: '#e01e63' },
-  { id: 'm-survival', url: AR + 'dance-machine.glb', tile: [12.3, 7.2], rot: -Math.PI / 2, panelId: 'works-survival-sim', title: 'SURVIVAL SIM', color: '#8e24aa' },
-  { id: 'm-cleavercut', url: AR + 'claw-machine.glb', tile: [12.3, 9.8], rot: -Math.PI / 2, panelId: 'works-cleavercut', title: 'CLEAVERCUT', color: '#ef6c00', animate: true },
-  { id: 'm-playground', url: AR + 'basketball-game.glb', tile: [9, 10.2], rot: Math.PI, panelId: 'works-playground-finder', title: 'PLAYGROUND FINDER', color: '#2e7d32' },
-  { id: 'm-firebat', url: AR + 'air-hockey.glb', tile: [11, 10.2], rot: Math.PI, panelId: 'works-firebat', title: 'FIREBAT HOMELAB', color: '#d84315' },
-] as const;
-
-// ── The household — humans, indoors only ───────────────────────────────────
-const NPCS: (Omit<NpcProps, 'position'> & { tile: [number, number]; y?: number })[] = [
-  // Hall
-  { id: 'host', model: NP + 'character-male-a.glb', tile: [6, 9.3], rotationY: 0.5, name: 'HOST' },
-  { id: 'visitor', model: NP + 'character-female-b.glb', tile: [6.5, 6.8], rotationY: -2.3, name: 'VISITOR', pose: 'holding-both' },
-  // Kitchen / diner
-  { id: 'cook', model: NP + 'character-female-c.glb', tile: [3.3, 0.6], rotationY: Math.PI, name: 'COOK' },
-  { id: 'guest', model: NP + 'character-male-b.glb', tile: [8.85, 2.05], y: 0.26, rotationY: Math.PI, name: 'GUEST', pose: 'sit' },
-  // Study
-  { id: 'analyst', model: NP + 'character-female-d.glb', tile: [9, 3.6], y: 0.28, rotationY: Math.PI, name: 'ANALYST', pose: 'sit' },
-  { id: 'reader', model: NP + 'character-male-e.glb', tile: [11.0, 4.9], rotationY: Math.PI / 2, name: 'READER' },
-  // Living room
-  { id: 'lounger', model: NP + 'character-female-e.glb', tile: [1.5, 5.3], y: 0.24, rotationY: Math.PI, name: 'LOUNGER', pose: 'sit' },
-  { id: 'bookworm', model: NP + 'character-male-c.glb', tile: [2.7, 8.7], y: 0.3, rotationY: Math.PI / 2, name: 'BOOKWORM', pose: 'sit' },
-  { id: 'dj', model: NP + 'character-female-f.glb', tile: [2.3, 3.6], rotationY: 2.6, name: 'DJ' },
-  // Games den
-  { id: 'gamer', model: AR + 'character-gamer.glb', tile: [9, 8.7], rotationY: Math.PI, name: 'GAMER' },
-  { id: 'challenger', model: AR + 'character-employee.glb', tile: [11, 8.7], rotationY: 0, name: 'CHALLENGER' },
-];
+import { useEditorStore } from '../editor/useEditorStore';
 
 // ── Animals — all fifteen live outdoors, in raw world coords ───────────────
 // Positions near the house add the matching *_GROWTH delta (see HouseMap) so
@@ -78,23 +49,26 @@ const ANIMALS: (Omit<AnimalProps, 'position'> & { at: [number, number] })[] = [
 ];
 
 export function Interactables() {
+  const machines = useEditorStore((s) => s.data.machines);
+  const npcs = useEditorStore((s) => s.data.npcs);
+
   return (
     <>
-      {MACHINES.map((m) => (
+      {machines.map((m) => (
         <ArcadeMachine
           key={m.id}
           id={m.id}
           url={m.url}
           position={tileToWorld(m.tile[0], m.tile[1])}
-          rotationY={m.rot}
+          rotationY={m.rotationY ?? 0}
           panelId={m.panelId}
           title={m.title}
           color={m.color}
-          animate={'animate' in m ? m.animate : false}
+          animate={m.animate ?? false}
         />
       ))}
 
-      {NPCS.map(({ tile, y, ...npc }) => {
+      {npcs.map(({ tile, y, ...npc }) => {
         const [x, , z] = tileToWorld(tile[0], tile[1]);
         return <Npc key={npc.id} {...npc} position={[x, y ?? 0, z]} />;
       })}

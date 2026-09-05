@@ -81,6 +81,8 @@ export function KitModel({
 }
 
 export interface PropSpec {
+  /** Stable id (see src/content/placement.json) — used as the React key when present. */
+  id?: string;
   url: string;
   /** Grid placement (fractional / out-of-grid allowed) … */
   tile?: [number, number];
@@ -148,7 +150,7 @@ export function Props({ items }: { items: PropSpec[] }) {
   return (
     <>
       {items.map((p, i) => (
-        <Prop key={i} {...p} />
+        <Prop key={p.id ?? i} {...p} />
       ))}
     </>
   );

@@ -21,6 +21,9 @@ import { ProximityDetector } from '../interactions/ProximityDetector';
 import { RenderLoopController } from './RenderLoopController';
 import { TapToMove } from './TapToMove';
 import { useGameStore } from '../state/useGameStore';
+import { useEditorStore } from '../editor/useEditorStore';
+import { BuildModeScene } from '../editor/BuildModeScene';
+import { BuildCamera } from '../editor/BuildCamera';
 
 // ecctrl reads these key names via drei's KeyboardControls.
 const keyboardMap = [
@@ -102,8 +105,11 @@ export function Experience() {
   // A dialogue/project panel blocks WASD/Space, but the world keeps animating
   // (see RenderLoopController) — only movement input is gated.
   const isPaused = useGameStore((s) => s.isPaused);
+  // Build Mode (press B, dev only — see src/editor) takes over the camera and
+  // freezes normal movement input, same mechanism as a dialogue panel.
+  const buildActive = useEditorStore((s) => s.active);
   return (
-    <KeyboardControls map={isPaused ? FROZEN_KEYBOARD_MAP : keyboardMap}>
+    <KeyboardControls map={isPaused || buildActive ? FROZEN_KEYBOARD_MAP : keyboardMap}>
       <Canvas
         shadows
         camera={{ fov: 55, position: [0, 5, 10] }}
@@ -147,7 +153,7 @@ export function Experience() {
             <Suspense fallback={null}>
               <World />
             </Suspense>
-            {!DEBUG_TOPDOWN && (
+            {!DEBUG_TOPDOWN && !buildActive && (
               <Suspense fallback={null}>
                 <Player />
               </Suspense>
@@ -158,11 +164,18 @@ export function Experience() {
           </Physics>
         </Suspense>
 
-        <ProximityDetector />
-        <TapToMove />
-        {!DEBUG_TOPDOWN && <AdaptiveFov />}
+        {!buildActive && <ProximityDetector />}
+        {!buildActive && <TapToMove />}
+        {!DEBUG_TOPDOWN && !buildActive && <AdaptiveFov />}
 
-        {DEBUG_TOPDOWN && (
+        {buildActive && (
+          <Suspense fallback={null}>
+            <BuildModeScene />
+            <BuildCamera />
+          </Suspense>
+        )}
+
+        {DEBUG_TOPDOWN && !buildActive && (
           <PerspectiveCamera
             makeDefault
             position={[...DEBUG_CAM.position]}

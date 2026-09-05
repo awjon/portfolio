@@ -113,6 +113,32 @@ export function tileToWorld(col: number, row: number): [number, number, number] 
   return [(col - (COLS - 1) / 2) * TILE, 0, (row - (ROWS - 1) / 2) * TILE];
 }
 
+/** Inverse of tileToWorld's XZ mapping — used by the build-mode editor to turn
+ *  a mouse hit on the floor back into grid tile coordinates. */
+export function worldToTile(x: number, z: number): [number, number] {
+  return [x / TILE + (COLS - 1) / 2, z / TILE + (ROWS - 1) / 2];
+}
+
+/** The rectangle a room occupies, in tile coordinates (cell centres). Used by
+ *  the build-mode editor's "snap to wall" helper — every room is a solid
+ *  rectangle post-redesign, so this is well-defined for all five rooms. */
+export function roomBounds(room: Room): { minC: number; maxC: number; minR: number; maxR: number } {
+  let minC = Infinity;
+  let maxC = -Infinity;
+  let minR = Infinity;
+  let maxR = -Infinity;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (roomAt(c, r) !== room) continue;
+      if (c < minC) minC = c;
+      if (c > maxC) maxC = c;
+      if (r < minR) minR = r;
+      if (r > maxR) maxR = r;
+    }
+  }
+  return { minC, maxC, minR, maxR };
+}
+
 export const HOUSE = {
   minX: -((COLS / 2) * TILE),
   maxX: (COLS / 2) * TILE,
